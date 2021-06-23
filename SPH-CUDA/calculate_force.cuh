@@ -25,6 +25,9 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 			for (int y = -1; y <= 1; y++) {
 				for (int z = -1; z <= 1; z++) {
 					int3 neighbor_cell_idx = cell_idx + make_int3(x, y, z);
+					if (neighbor_cell_idx.x < 0 || neighbor_cell_idx.y < 0 || neighbor_cell_idx.z < 0) {
+						continue;
+					}
 					int neighbor_flat_idx = neighbor_cell_idx.x + neighbor_cell_idx.y * cell_dims.x + neighbor_cell_idx.z * cell_dims.x * cell_dims.y;
 
 					int neighbor_particle_idx = cell_list[neighbor_flat_idx];

@@ -23,17 +23,17 @@ struct Parameters {
 	/* Integration method */
 	Integrator integrator;
 
-	/* Kernel constants */
-	float const_poly6;
-	float const_spiky;
-	float const_visc;
-	float const_surf;
-
 	/* Smoothing radius */
 	float h;
 	float h_inv;
 	float h2;
 	float h3;
+
+	/* Kernel constants */
+	float const_poly6;
+	float const_spiky;
+	float const_visc;
+	float const_surf;
 
 	/* Pressure constant */
 	float k;
@@ -82,7 +82,6 @@ struct Parameters {
 		const_surf(3 / (2 * float(M_PI) * powf(h, 3))),
 
 		h(.1), h_inv(1 / h), h2(h* h), h3(h* h* h),
-
 		k(.01), p0(1.), e(.02), s(0.1), mass(1.), g(make_float3(0, -9.81, 0)),
 
 		damping(std::stof(params["boundary_damping"])),
