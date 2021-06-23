@@ -64,7 +64,6 @@ struct Parameters {
 	/* Particle spawn parameters */
 	float spawn_dist;
 	int edge_length;
-	float3 spawn_dims;
 	float3 spawn_offset;
 
 	/* Visualization parameters */
@@ -100,7 +99,6 @@ struct Parameters {
 		spawn_dist(0.035),
 		edge_length(int(powf(float(particle_num), 1/3))),
 		spawn_offset(make_float3(0., .5, 0.)),
-		spawn_dims(make_float3((edge_length - 1) * spawn_dist, (edge_length - 1)* spawn_dist, (edge_length - 1)* spawn_dist)),
 
 		particle_radius(std::stof(params["particle_radius"]))
 	{}
