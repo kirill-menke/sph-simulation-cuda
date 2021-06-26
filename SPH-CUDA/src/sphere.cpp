@@ -35,8 +35,8 @@ Sphere::Sphere(int radius, int rings, int sectors) : radius(radius), rings(rings
     //vao->bind();
 }
 
-void Sphere::draw(Renderer &renderer) {
-    renderer.draw(GL_TRIANGLES, *vao, ibo, 0, 0);
+void Sphere::draw(Renderer* renderer) {
+    renderer->draw(GL_TRIANGLES, *vao, ibo, 0, 0);
 }
 
 void Sphere::bind() {

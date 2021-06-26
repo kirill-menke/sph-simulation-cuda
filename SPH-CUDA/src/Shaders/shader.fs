@@ -19,6 +19,9 @@ uniform float far;
 
 uniform vec3 camPos;
 
+// transparency
+uniform float alpha;
+
 
 
 //https://stackoverflow.com/questions/6652253/getting-the-true-z-value-from-the-depth-buffer
@@ -105,5 +108,6 @@ void main()
 	//FragColor = vec4(applyFogSimple(diffColor, depth), 1.0);
 	vec3 fragDir = normalize(FragPos - camPos); 
 	//FragColor = vec4(applyFog(diffColor, depth, fragDir, -lightDir), 1.0);
-	FragColor = vec4(applyFogNonConst(diffColor, dist, camPos, fragDir), 1.0);
+	//FragColor = vec4(applyFogNonConst(diffColor, dist, camPos, fragDir), alpha);
+	FragColor = vec4(diffColor, alpha);
 }

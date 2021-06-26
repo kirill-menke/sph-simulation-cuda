@@ -13,7 +13,7 @@ const float farViewDistance = 1000.0;
 
 // camera
 // Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-Camera camera(glm::vec3(-50.0f, 10.0f, 15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera camera(glm::vec3(-400.0f, 100.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -171,7 +171,7 @@ bool inFOV(float x, float y) {
     return abs(getAngle2(-denormalizeRadians(glm::radians(camera.Yaw-90)), x-getCamPos().x, y-getCamPos().y)) <= (getFOVrad()/2.0 + glm::radians(10.0));
 }
 
-Visualizer::Visualizer() {
+Visualizer::Visualizer(float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
     // DEBUG
     #ifdef DEBUG
         glfwSetErrorCallback(error_callback);
@@ -235,6 +235,10 @@ Visualizer::Visualizer() {
     glfwGetFramebufferSize(window, &viewportWidth, &viewportHeight); // init viewport
     std::cout << viewportWidth <<  " " << viewportHeight << std::endl;
     framebuffer_size_callback(window, viewportWidth, viewportHeight);// and aspectRatio
+
+    // Transparency
+    glEnable(GL_BLEND); // order doesnt matter
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // TODO test
     int test = glfwExtensionSupported("WGL_EXT_swap_control_tear");
@@ -284,6 +288,7 @@ Visualizer::Visualizer() {
     shader = new Shader("src/Shaders/shader");
     // Load meshes
     sphere = new Sphere(1, 8, 8);
+    box = new Box(glm::vec3(minBoundX, minBoundY, minBoundZ), glm::vec3(maxBoundX, maxBoundY, maxBoundZ));
 }
 
 void Visualizer::draw(float* translations, int objectNum) {
@@ -296,7 +301,7 @@ void Visualizer::draw(float* translations, int objectNum) {
     processInput(window);
 
     // clear
-    renderer->clear(0.3f, 0.4f, 0.5f, 1.0f);
+    renderer->clear(0.3f, 0.4f, 0.4f, 1.0f);
     // bind the right shader for drawing
     shader->bind();
 
@@ -304,6 +309,7 @@ void Visualizer::draw(float* translations, int objectNum) {
     shader->setFloat("near", nearViewDistance);
     shader->setFloat("far", farViewDistance);
     shader->setVec3("camPos", getCamPos());
+    shader->setFloat("alpha", 1.0f);
 
     // pass projection matrix to shader (note that in this case it could change every frame)
     glm::mat4 projection = glm::perspective(getFOVvertRad(), getAspectRatio(), nearViewDistance, farViewDistance); // fovy (vertical); last two params: min and max view range
@@ -311,7 +317,6 @@ void Visualizer::draw(float* translations, int objectNum) {
     // camera/view transformation
     glm::mat4 view = camera.GetViewMatrix();
     shader->setMat4("view", view);
-    shader->bind();
     // calculate the model matrix for each object and pass it to shader before drawing
     glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  0.0f)); // cube position
@@ -341,6 +346,7 @@ void Visualizer::draw(float* translations, int objectNum) {
         glCullFace(GL_FRONT);
     }
 
+    // draw spheres
     sphere->bind();
     VertexBuffer *instanceVBO = new VertexBuffer(translations, objectNum*3*sizeof(translations[0]));
     glEnableVertexAttribArray(3);
@@ -353,6 +359,12 @@ void Visualizer::draw(float* translations, int objectNum) {
     glDrawElementsInstanced(GL_TRIANGLES, ibo->getCount(), GL_UNSIGNED_INT, (void*)0, objectNum);
 
     delete instanceVBO;
+
+    // draw box
+    shader->setFloat("alpha", 0.2f);
+    box->bind();
+    box->draw(renderer);
+    shader->setFloat("alpha", 1.0f);
 
     if (ENABLE_FACE_CULLING) {
         glDisable(GL_CULL_FACE);

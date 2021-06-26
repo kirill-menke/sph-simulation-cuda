@@ -58,7 +58,8 @@ int main() {
 		translations[i*3 + 2] = particles[i].pos.z * 100;
 	}
 
-    Visualizer vis;
+    Visualizer vis(params.min_box_bound.x * 100, params.min_box_bound.y * 100, params.min_box_bound.z * 100,
+					params.max_box_bound.x * 100, params.max_box_bound.y * 100, params.max_box_bound.z * 100);
 
 
 	std::cout << "Simulation started" << std::endl;

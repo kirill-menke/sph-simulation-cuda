@@ -15,21 +15,18 @@
 
 #include <vector>
 
-class Sphere {
+class Box {
 public:
-    Sphere(int radius, int rings, int sectors);
+    Box(glm::vec3 min, glm::vec3 max);
     void draw(Renderer* renderer);
     void bind();
     int count;
     int bufferLength;
     float* buffer;
-    int radius;
-    int rings;
-    int sectors;
-    inline void push_indices(std::vector<unsigned int>& indices, int sectors, int r, int s);
-    int createSphere(std::vector<glm::vec3>& vertices, std::vector<unsigned int>& indices, float radius, unsigned int rings, unsigned int sectors);
+    glm::vec3 min, max;
+    int createBox(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<unsigned int>& indices, glm::vec3 min, glm::vec3 max);
     VertexBuffer* vbo;
     VertexArrayObject* vao;
     AttributeBufferLayout* abl;
-    IndexBuffer* ibo;
+    //IndexBuffer* ibo;
 };

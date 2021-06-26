@@ -24,6 +24,7 @@
 #include "src/Renderer/AttributeBufferLayout.h"
 
 #include "src/sphere.h"
+#include "src/box.h"
 
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -34,7 +35,7 @@
 
 class Visualizer {
 public:
-    Visualizer();
+    Visualizer(float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ);
     void draw(float* translations, int objectNum);
     void end();
     
@@ -43,7 +44,8 @@ public:
     Renderer* renderer;
 
     Shader* shader;
-    //Shader shader2;
+    
     Sphere* sphere;
+    Box* box;
     bool ENABLE_FACE_CULLING;
 };
