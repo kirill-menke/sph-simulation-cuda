@@ -10,6 +10,8 @@
 #include "calculate_force.cuh"
 #include "integrators.cuh"
 
+#include "visualizer.h"
+
 void initializeParticles(std::vector<Particle>&, Parameters&);
 
 int main() {
@@ -44,8 +46,23 @@ int main() {
 	checkError(cudaMemcpy(d_particle_list, particle_list.data(), bytes_particle_list, cudaMemcpyHostToDevice));
 	checkError(cudaMemcpy(d_cell_list, cell_list.data(), bytes_cell_list, cudaMemcpyHostToDevice));
 
+
+	/* Visualization init */
+
+	checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
+	int objectNum = params.particle_num;
+	float* translations = new float[objectNum*3];
+	for (int i = 0; i < objectNum; i++) {
+		translations[i*3 + 0] = particles[i].pos.x * 100;
+		translations[i*3 + 1] = particles[i].pos.y * 100;
+		translations[i*3 + 2] = particles[i].pos.z * 100;
+	}
+
+    Visualizer vis;
+
+
 	std::cout << "Simulation started" << std::endl;
-	while (true) {
+	while (!glfwWindowShouldClose(vis.window)) {
 
 		/* Set all entries of cell list to -1 */
 		reset_cell_list << <params.thread_groups_cell, params.threads_per_group >> > (d_cell_list, params.cell_num);
@@ -75,6 +92,16 @@ int main() {
 			(d_particles, d_force_buffer, params.time_step, params.particle_num, params.min_box_bound, params.max_box_bound, params.damping);
 		checkError(cudaPeekAtLastError());
 		checkError(cudaDeviceSynchronize());
+
+		/* Visualization update */
+		//translations[2] += 0.01;
+		checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
+		for (int i = 0; i < objectNum; i++) {
+			translations[i*3 + 0] = particles[i].pos.x * 100;
+			translations[i*3 + 1] = particles[i].pos.y * 100;
+			translations[i*3 + 2] = particles[i].pos.z * 100;
+		}
+        vis.draw(translations, objectNum);
 	}
 
 	std::cout << "Simulation finished" << std::endl;
@@ -84,6 +111,9 @@ int main() {
 	checkError(cudaFree(d_force_buffer));
 	checkError(cudaFree(d_particle_list));
 	checkError(cudaFree(d_cell_list));
+
+	/* Visualization end*/
+	vis.end();
 }
 
 
