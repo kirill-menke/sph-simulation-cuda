@@ -13,14 +13,13 @@ calculate_density(Particle* particles, int* cell_list, int* particle_list, float
 	if (tid < N) {
 		Particle& particleA = particles[tid];
 		int3 cell_idx = floor((particleA.pos - min_box_bound) * h_inv);
-
 		float density = 0;
 
 		for (int x = -1; x <= 1; x++) {
 			for (int y = -1; y <= 1; y++) {
 				for (int z = -1; z <= 1; z++) {
 					int3 neighbor_cell_idx = cell_idx + make_int3(x, y, z);
-					if (neighbor_cell_idx.x < 0 || neighbor_cell_idx.y < 0 || neighbor_cell_idx.z < 0) {
+					if (neighbor_cell_idx.x < 0 || neighbor_cell_idx.y < 0 || neighbor_cell_idx.z < 0 || neighbor_cell_idx.x >= cell_dims.x || neighbor_cell_idx.y >= cell_dims.y || neighbor_cell_idx.z >= cell_dims.z) {
 						continue;
 					}
 					int neighbor_flat_idx = neighbor_cell_idx.x + neighbor_cell_idx.y * cell_dims.x + neighbor_cell_idx.z * cell_dims.x * cell_dims.y;

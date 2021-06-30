@@ -25,14 +25,13 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 			for (int y = -1; y <= 1; y++) {
 				for (int z = -1; z <= 1; z++) {
 					int3 neighbor_cell_idx = cell_idx + make_int3(x, y, z);
-					if (neighbor_cell_idx.x < 0 || neighbor_cell_idx.y < 0 || neighbor_cell_idx.z < 0) {
+					if (neighbor_cell_idx.x < 0 || neighbor_cell_idx.y < 0 || neighbor_cell_idx.z < 0 || neighbor_cell_idx.x >= cell_dims.x || neighbor_cell_idx.y >= cell_dims.y || neighbor_cell_idx.z >= cell_dims.z) {
 						continue;
 					}
 					int neighbor_flat_idx = neighbor_cell_idx.x + neighbor_cell_idx.y * cell_dims.x + neighbor_cell_idx.z * cell_dims.x * cell_dims.y;
 
 					int neighbor_particle_idx = cell_list[neighbor_flat_idx];
 					while (neighbor_particle_idx != -1) {
-
 						Particle& particleB = particles[neighbor_particle_idx];
 
 						float3 diff = particleA.pos - particleB.pos;
@@ -52,10 +51,12 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 							float pressureB = fmaxf(k * (densityB - p0), 0);
 							f_pressure += mass * (pressureA / (densityA * densityA) + pressureB / (densityB * densityB)) * w_press;
 
+
 							// Viscosity forces
 							float w_vis = -const_visc * (h - r);
 							float3 v_diff = particleB.vel - particleA.vel;
 							f_viscosity += mass * (v_diff / densityB) * w_vis;
+
 
 							// Surface tension
 							float w_surf = 0;
@@ -79,6 +80,7 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 		f_pressure *= -1;
 		f_surface *= - s / mass;
 		f_viscosity *= e;
+
 
 		force_buffer[tid] = (f_pressure + f_viscosity + f_surface) / densityA + g;
 	}

@@ -46,20 +46,10 @@ int main() {
 	checkError(cudaMemcpy(d_particle_list, particle_list.data(), bytes_particle_list, cudaMemcpyHostToDevice));
 	checkError(cudaMemcpy(d_cell_list, cell_list.data(), bytes_cell_list, cudaMemcpyHostToDevice));
 
-
 	/* Visualization init */
-
-	checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
-	int objectNum = params.particle_num;
-	float* translations = new float[objectNum*3];
-	for (int i = 0; i < objectNum; i++) {
-		translations[i*3 + 0] = particles[i].pos.x * 100;
-		translations[i*3 + 1] = particles[i].pos.y * 100;
-		translations[i*3 + 2] = particles[i].pos.z * 100;
-	}
-
-    Visualizer vis(params.min_box_bound.x * 100, params.min_box_bound.y * 100, params.min_box_bound.z * 100,
-					params.max_box_bound.x * 100, params.max_box_bound.y * 100, params.max_box_bound.z * 100);
+	float* translations = new float[params.particle_num * 3];
+	Visualizer vis(params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
+		params.max_box_bound.x, params.max_box_bound.y, params.max_box_bound.z);
 
 
 	std::cout << "Simulation started" << std::endl;
@@ -95,14 +85,13 @@ int main() {
 		checkError(cudaDeviceSynchronize());
 
 		/* Visualization update */
-		//translations[2] += 0.01;
 		checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
-		for (int i = 0; i < objectNum; i++) {
-			translations[i*3 + 0] = particles[i].pos.x * 100;
-			translations[i*3 + 1] = particles[i].pos.y * 100;
-			translations[i*3 + 2] = particles[i].pos.z * 100;
+		for (int i = 0; i < particles.size(); i++) {
+			translations[i*3 + 0] = particles[i].pos.x;
+			translations[i*3 + 1] = particles[i].pos.y;
+			translations[i*3 + 2] = particles[i].pos.z;
 		}
-        vis.draw(translations, objectNum);
+		vis.draw(translations, params.particle_num);
 	}
 
 	std::cout << "Simulation finished" << std::endl;
@@ -113,15 +102,16 @@ int main() {
 	checkError(cudaFree(d_particle_list));
 	checkError(cudaFree(d_cell_list));
 
-	/* Visualization end*/
+	/* Visualization end */
 	vis.end();
 }
 
 
 /* Spawns particles in a cubic shape */
 void initializeParticles(std::vector<Particle>& particles, Parameters& p) {
+	float shift = p.edge_length * p.spawn_dist / 2;
+
 	for (int i = 0; i < p.particle_num; i++) {
-		float shift = p.edge_length * p.spawn_dist / 2;
 		float x = (i % p.edge_length) * p.spawn_dist - shift + p.spawn_offset.x;
 		float y = ((i / p.edge_length) % p.edge_length) * p.spawn_dist - shift + p.spawn_offset.y + p.max_box_bound.y / 2;
 		float z = (i / (p.edge_length * p.edge_length)) * p.spawn_dist - shift + p.spawn_offset.z;

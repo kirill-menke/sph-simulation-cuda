@@ -81,12 +81,12 @@ struct Parameters {
 		const_visc(15 / (2 * float(M_PI) * powf(h, 3))),
 		const_surf(3 / (2 * float(M_PI) * powf(h, 3))),
 
-		h(.1), h_inv(1 / h), h2(h* h), h3(h* h* h),
+		h(1.), h_inv(1 / h), h2(h* h), h3(h* h* h),
 		k(.01), p0(1.), e(.02), s(0.1), mass(1.), g(make_float3(0, -9.81, 0)),
 
 		damping(std::stof(params["boundary_damping"])),
-		min_box_bound(make_float3(-1., 0., -1.)),
-		max_box_bound(make_float3(1., 2., 1.)),
+		min_box_bound(make_float3(-10., 0., -10.)),
+		max_box_bound(make_float3(10., 20., 10.)),
 		cell_dims((max_box_bound - min_box_bound) / h),
 		cell_size((max_box_bound - min_box_bound) / cell_dims),
 		cell_num(int(cell_dims.x * cell_dims.y * cell_dims.z)),
@@ -95,9 +95,9 @@ struct Parameters {
 		thread_groups_part(int((particle_num + threads_per_group - 1) / threads_per_group)),
 		thread_groups_cell(int((cell_num + threads_per_group - 1) / threads_per_group)),
 
-		spawn_dist(0.035),
-		edge_length(int(powf(float(particle_num), 1/3))),
-		spawn_offset(make_float3(0., .5, 0.)),
+		spawn_dist(2.),
+		edge_length(powf(particle_num, 0.33333333333333)),
+		spawn_offset(make_float3(0., 3., 0.)),
 
 		particle_radius(std::stof(params["particle_radius"]))
 	{}

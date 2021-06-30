@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "visualizer.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -13,7 +15,7 @@ const float farViewDistance = 1000.0;
 
 // camera
 // Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-Camera camera(glm::vec3(-400.0f, 100.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera camera(glm::vec3(-50.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -171,7 +173,7 @@ bool inFOV(float x, float y) {
     return abs(getAngle2(-denormalizeRadians(glm::radians(camera.Yaw-90)), x-getCamPos().x, y-getCamPos().y)) <= (getFOVrad()/2.0 + glm::radians(10.0));
 }
 
-Visualizer::Visualizer(float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
+Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
     // DEBUG
     #ifdef DEBUG
         glfwSetErrorCallback(error_callback);
@@ -214,9 +216,9 @@ Visualizer::Visualizer(float minBoundX, float minBoundY, float minBoundZ, float 
     int screenheight = return_struct[videoModeCount-1].height;
     int screenwidth = return_struct[videoModeCount-1].width;
     //std::cout << screenwidth << " " << screenheight << std::endl;
-    //window = glfwCreateWindow(1024, 780, "Hello World", NULL, NULL);          // window
+    window = glfwCreateWindow(1024, 780, "Hello World", NULL, NULL);          // window
     //GLFWwindow* window = glfwCreateWindow(screenwidth, screenheight, "Hello World", monitor, nullptr);   // fullscreen with max resolution
-    window = glfwCreateWindow(1600, 900, "Hello World", glfwGetPrimaryMonitor(), nullptr);   // fullscreen with min res
+    //window = glfwCreateWindow(1600, 900, "Hello World", glfwGetPrimaryMonitor(), nullptr);   // fullscreen with min res
     if (window == nullptr) { // !window
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -287,8 +289,9 @@ Visualizer::Visualizer(float minBoundX, float minBoundY, float minBoundZ, float 
     // Shader stuff
     shader = new Shader("src/Shaders/shader");
     // Load meshes
-    sphere = new Sphere(1, 8, 8);
-    box = new Box(glm::vec3(minBoundX, minBoundY, minBoundZ), glm::vec3(maxBoundX, maxBoundY, maxBoundZ));
+    sphere = new Sphere(radius, 8, 8);
+    box = new Box(glm::vec3(minBoundX - radius, minBoundY - radius, minBoundZ - radius), 
+        glm::vec3(maxBoundX + radius, maxBoundY + radius, maxBoundZ + radius));
 }
 
 void Visualizer::draw(float* translations, int objectNum) {

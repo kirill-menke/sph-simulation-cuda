@@ -1,7 +1,7 @@
 #pragma once
 
+#define GLEW_STATIC
 #include <GL/glew.h>
-//#define GLEW_STATIC
 #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <iostream>
@@ -15,7 +15,7 @@
 #include <iostream>
 
 #define BOOST_STACKTRACE_USE_ADDR2LINE
-#include <boost/stacktrace.hpp>
+// #include <boost/stacktrace.hpp>
 
 #include "src/Renderer/Renderer.h"
 #include "src/Renderer/VertexBuffer.h"
@@ -35,7 +35,7 @@
 
 class Visualizer {
 public:
-    Visualizer(float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ);
+    Visualizer(float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ);
     void draw(float* translations, int objectNum);
     void end();
     
