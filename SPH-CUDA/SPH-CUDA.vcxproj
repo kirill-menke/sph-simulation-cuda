@@ -117,12 +117,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glew-2.1.0-win32\glew-2.1.0\include;C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glfw-3.3.4.bin.WIN64\include;C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glm-0.9.9.8\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\dependencies\glew-2.1.0-win32\glew-2.1.0\include;..\dependencies\glfw-3.3.4.bin.WIN64\include;..\dependencies\glm-0.9.9.8\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glew-2.1.0-win32\glew-2.1.0\lib\Release\x64;C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glfw-3.3.4.bin.WIN64\lib-vc2019;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\dependencies\glew-2.1.0-win32\glew-2.1.0\lib\Release\x64;..\dependencies\glfw-3.3.4.bin.WIN64\lib-vc2019;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>cudart.lib;cudadevrt.lib;opengl32.lib;glu32.lib;glew32s.lib;glfw3.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
@@ -142,14 +142,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glew-2.1.0-win32\glew-2.1.0\include;C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glfw-3.3.4.bin.WIN64\include;C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glm-0.9.9.8\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\dependencies\glew-2.1.0-win32\glew-2.1.0\include;..\dependencies\glfw-3.3.4.bin.WIN64\include;..\dependencies\glm-0.9.9.8\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glew-2.1.0-win32\glew-2.1.0\lib\Release\x64;C:\Users\kiril\source\repos\SPH-CUDA\dependencies\glfw-3.3.4.bin.WIN64\lib-vc2019;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\dependencies\glew-2.1.0-win32\glew-2.1.0\lib\Release\x64;..\dependencies\glfw-3.3.4.bin.WIN64\lib-vc2019;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>cudart.lib;cudadevrt.lib;opengl32.lib;glu32.lib;glew32s.lib;glfw3.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
