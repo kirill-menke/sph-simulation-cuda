@@ -62,9 +62,9 @@ struct Parameters {
 	int thread_groups_cell;
 
 	/* Particle spawn parameters */
-	float spawn_dist;
-	int edge_length;
-	float3 spawn_offset;
+	float spawn_dist; // unit: coordinates
+	int edge_length; // unit: particles
+	float3 spawn_offset; // unit: coordinates
 
 	/* Visualization parameters */
 	float particle_radius;
@@ -89,15 +89,15 @@ struct Parameters {
 		max_box_bound(make_float3(10., 20., 10.)),
 		cell_dims((max_box_bound - min_box_bound) / h),
 		cell_size((max_box_bound - min_box_bound) / cell_dims),
-		cell_num(int(cell_dims.x * cell_dims.y * cell_dims.z)),
+		cell_num(int(cell_dims.x* cell_dims.y* cell_dims.z)),
 
 		threads_per_group(std::stoi(params["threads_per_group"])),
 		thread_groups_part(int((particle_num + threads_per_group - 1) / threads_per_group)),
 		thread_groups_cell(int((cell_num + threads_per_group - 1) / threads_per_group)),
 
 		spawn_dist(2.),
-		edge_length(powf(particle_num, 0.33333333333333)),
-		spawn_offset(make_float3(0., 3., 0.)),
+		edge_length(powf(particle_num, 1./3.)),
+		spawn_offset(make_float3(0., 10., 0.)),
 
 		particle_radius(std::stof(params["particle_radius"]))
 	{}
