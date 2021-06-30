@@ -109,12 +109,20 @@ int main() {
 
 /* Spawns particles in a cubic shape */
 void initializeParticles(std::vector<Particle>& particles, Parameters& p) {
-	float shift = p.edge_length * p.spawn_dist / 2;
+	// calculate shift in order to spawn the cubic shape in the center of the box
+	// shift equals half of the length of the cubic shape
+	float shift = (p.edge_length * p.spawn_dist) / 2;
 
 	for (int i = 0; i < p.particle_num; i++) {
-		float x = (i % p.edge_length) * p.spawn_dist - shift + p.spawn_offset.x;
-		float y = ((i / p.edge_length) % p.edge_length) * p.spawn_dist - shift + p.spawn_offset.y + p.max_box_bound.y / 2;
-		float z = (i / (p.edge_length * p.edge_length)) * p.spawn_dist - shift + p.spawn_offset.z;
+		// calculate cubic shape
+		float x = (i % p.edge_length) * p.spawn_dist;
+		float y = ((i / p.edge_length) % p.edge_length) * p.spawn_dist;
+		float z = (i / (p.edge_length * p.edge_length)) * p.spawn_dist;
+
+		// add offsets
+		x += p.spawn_offset.x - shift;
+		y += p.spawn_offset.y - shift;
+		z += p.spawn_offset.z - shift;
 
 		particles.emplace_back(make_float3(x, y, z), make_float3(0., 0., 0.));
 	}
