@@ -248,7 +248,7 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
     std::cout << "WGL_EXT_swap_control_tear support: " << test << " GLX_EXT_swap_control_tear: " << test0 << std::endl;
 
     // vsync
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     // face culling
     ENABLE_FACE_CULLING = false;
