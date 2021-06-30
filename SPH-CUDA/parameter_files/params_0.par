@@ -1,6 +1,30 @@
-particle_num 512
-timestep 0.001
-threads_per_group 64
-integrator euler
-boundary_damping 0.8
-particle_radius 1.0
+particle_num		512
+timestep			0.001
+
+integrator			euler
+
+h					3.0
+
+k					0.01
+p0					1.0
+e					0.02					
+s					0.1
+mass				1.0
+g					-9.81
+
+boundary_damping	0.8
+min_box_x			-10.0
+min_box_y			-0.0
+min_box_z			-10.0
+max_box_x			10.0
+max_box_y			20.0
+max_box_z			10.0
+
+threads_per_group	128
+
+spawn_dist			2.0
+spawn_off_x			0.0
+spawn_off_y			10.0
+spawn_off_z			0.0
+
+particle_radius		1.0

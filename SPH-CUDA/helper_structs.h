@@ -62,9 +62,9 @@ struct Parameters {
 	int thread_groups_cell;
 
 	/* Particle spawn parameters */
-	float spawn_dist; // unit: coordinates
-	int edge_length; // unit: particles
-	float3 spawn_offset; // unit: coordinates
+	float spawn_dist;		// unit: coordinates
+	int edge_length;		// unit: particles
+	float3 spawn_offset;	// unit: coordinates
 
 	/* Visualization parameters */
 	float particle_radius;
@@ -81,12 +81,13 @@ struct Parameters {
 		const_visc(15 / (2 * float(M_PI) * powf(h, 3))),
 		const_surf(3 / (2 * float(M_PI) * powf(h, 3))),
 
-		h(1.), h_inv(1 / h), h2(h* h), h3(h* h* h),
-		k(.01), p0(1.), e(.02), s(0.1), mass(1.), g(make_float3(0, -9.81, 0)),
+		h(std::stof(params["h"])), h_inv(1 / h), h2(h* h), h3(h* h* h),
+		k(std::stof(params["k"])), p0(std::stof(params["p0"])), e(std::stof(params["e"])), s(std::stof(params["s"])), 
+		mass(std::stof(params["mass"])), g(make_float3(0, std::stof(params["g"]), 0)),
 
 		damping(std::stof(params["boundary_damping"])),
-		min_box_bound(make_float3(-10., 0., -10.)),
-		max_box_bound(make_float3(10., 20., 10.)),
+		min_box_bound(make_float3(std::stof(params["min_box_x"]), std::stof(params["min_box_y"]), std::stof(params["min_box_z"]))),
+		max_box_bound(make_float3(std::stof(params["max_box_x"]), std::stof(params["max_box_y"]), std::stof(params["max_box_z"]))),
 		cell_dims((max_box_bound - min_box_bound) / h),
 		cell_size((max_box_bound - min_box_bound) / cell_dims),
 		cell_num(int(cell_dims.x* cell_dims.y* cell_dims.z)),
@@ -95,9 +96,9 @@ struct Parameters {
 		thread_groups_part(int((particle_num + threads_per_group - 1) / threads_per_group)),
 		thread_groups_cell(int((cell_num + threads_per_group - 1) / threads_per_group)),
 
-		spawn_dist(2.),
+		spawn_dist(std::stof(params["spawn_dist"])),
 		edge_length(powf(particle_num, 1./3.)),
-		spawn_offset(make_float3(0., 10., 0.)),
+		spawn_offset(make_float3(std::stof(params["spawn_off_x"]), std::stof(params["spawn_off_y"]), std::stof(params["spawn_off_z"]))),
 
 		particle_radius(std::stof(params["particle_radius"]))
 	{}
