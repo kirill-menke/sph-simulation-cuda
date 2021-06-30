@@ -17,14 +17,14 @@
 
 class Sphere {
 public:
-    Sphere(int radius, int rings, int sectors);
+    Sphere(float radius, int rings, int sectors);
     void draw(Renderer* renderer);
     void bind();
     int count;
     int bufferLength;
     float* buffer;
     int radius;
-    int rings;
+    float rings;
     int sectors;
     inline void push_indices(std::vector<unsigned int>& indices, int sectors, int r, int s);
     int createSphere(std::vector<glm::vec3>& vertices, std::vector<unsigned int>& indices, float radius, unsigned int rings, unsigned int sectors);

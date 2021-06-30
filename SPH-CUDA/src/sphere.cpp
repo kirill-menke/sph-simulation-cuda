@@ -1,6 +1,8 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "sphere.h"
 
-Sphere::Sphere(int radius, int rings, int sectors) : radius(radius), rings(rings), sectors(sectors) {
+Sphere::Sphere(float radius, int rings, int sectors) : radius(radius), rings(rings), sectors(sectors) {
     std::vector<glm::vec3> vertices;
     std::vector<unsigned int> indices;
     count = createSphere(vertices, indices, radius, rings, sectors);
