@@ -291,7 +291,7 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
     // Load meshes
     sphere = new Sphere(radius, 8, 8);
     box = new Box(glm::vec3(minBoundX - radius, minBoundY - radius, minBoundZ - radius), 
-        glm::vec3(maxBoundX + radius, maxBoundY + radius, maxBoundZ + radius));
+        glm::vec3(maxBoundX - radius, maxBoundY + radius, maxBoundZ - radius));
 }
 
 void Visualizer::draw(float* translations, int objectNum) {
