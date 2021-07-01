@@ -4,8 +4,9 @@
 #include "helper_structs.h"
 #include "helper_math.h"
 
+
 __global__ void
-integrate_symplectic_euler(Particle* particles, float3* force_buffer, double delta_time, size_t N, float3 min_box_bound, float3 max_box_bound, float damping) {
+integrate_symplectic_euler(Particle* particles, float3* force_buffer, float delta_time, size_t N, float3 min_box_bound, float3 max_box_bound, float damping) {
 
 	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
 
@@ -29,8 +30,8 @@ integrate_symplectic_euler(Particle* particles, float3* force_buffer, double del
             particle.pos.y = min_box_bound.y;
             particle.vel.y = -particle.vel.y * damping;
         }
-        else if (particle.pos.y > max_box_bound.z - min_box_bound.z) {
-            particle.pos.y = max_box_bound.z - min_box_bound.z;
+        else if (particle.pos.y > max_box_bound.y) {
+            particle.pos.y = max_box_bound.y;
             particle.vel.y = -particle.vel.y * damping;
         }
 
@@ -43,4 +44,60 @@ integrate_symplectic_euler(Particle* particles, float3* force_buffer, double del
             particle.vel.z = -particle.vel.z * damping;
         }
 	}
+}
+
+/* Leapfrog integration scheme */
+
+/* Integrates position and "half" of the velocity */
+__global__ void
+leapfrog_pre_integration(Particle* particles, float3* force_buffer, float mass_inv, float delta_time, size_t N, float3 min_box_bound, float3 max_box_bound, float damping) {
+
+    int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+    if (tid < N) {
+        Particle& particle = particles[tid];
+
+        particle.pos += delta_time * particle.vel + 0.5 * mass_inv * force_buffer[tid] * delta_time * delta_time;
+        particle.vel += 0.5 * mass_inv * force_buffer[tid] * delta_time;
+
+        // Boundary condition: Dampen and reverse velocity vector
+        // TODO: Might produce wrong result for vel as only "half" of the velocity (with old force) is damped
+        if (particle.pos.x < min_box_bound.x) {
+            particle.pos.x = min_box_bound.x;
+            particle.vel.x = -particle.vel.x * damping;
+        }
+        else if (particle.pos.x > max_box_bound.x) {
+            particle.pos.x = max_box_bound.x;
+            particle.vel.x = -particle.vel.x * damping;
+        }
+
+        if (particle.pos.y < min_box_bound.y) {
+            particle.pos.y = min_box_bound.y;
+            particle.vel.y = -particle.vel.y * damping;
+        }
+        else if (particle.pos.y > max_box_bound.y) {
+            particle.pos.y = max_box_bound.y;
+            particle.vel.y = -particle.vel.y * damping;
+        }
+
+        if (particle.pos.z < min_box_bound.z) {
+            particle.pos.z = min_box_bound.z;
+            particle.vel.z = -particle.vel.z * damping;
+        }
+        else if (particle.pos.z > max_box_bound.z) {
+            particle.pos.z = max_box_bound.z;
+            particle.vel.z = -particle.vel.z * damping;
+        }
+    }
+}
+
+/* Integrates other "half" of the velocity */
+__global__ void
+leapfrog_post_integration(Particle* particles, float3* force_buffer, float mass_inv, float delta_time, size_t N) {
+    int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+    if (tid < N) {
+        Particle& particle = particles[tid];
+        particle.vel += 0.5 * mass_inv * force_buffer[tid] * delta_time;
+    }
 }

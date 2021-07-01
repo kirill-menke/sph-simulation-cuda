@@ -45,6 +45,7 @@ struct Parameters {
 	float s;
 	/* Particle mass */
 	float mass;
+	float mass_inv;
 	/* Gravity */
 	float3 g;
 
@@ -77,13 +78,13 @@ struct Parameters {
 		integrator(Integrator::ForwardEuler),
 
 		const_poly6(315 / (64 * float(M_PI) * powf(h, 9))),
-		const_spiky(15 / (float(M_PI) * powf(h, 6))),
+		const_spiky(-45 / (float(M_PI) * powf(h, 6))),
 		const_visc(15 / (2 * float(M_PI) * powf(h, 3))),
 		const_surf(3 / (2 * float(M_PI) * powf(h, 3))),
 
 		h(std::stof(params["h"])), h_inv(1 / h), h2(h* h), h3(h* h* h),
 		k(std::stof(params["k"])), p0(std::stof(params["p0"])), e(std::stof(params["e"])), s(std::stof(params["s"])), 
-		mass(std::stof(params["mass"])), g(make_float3(0, std::stof(params["g"]), 0)),
+		mass(std::stof(params["mass"])), g(make_float3(0, std::stof(params["g"]), 0)), mass_inv(1. / mass),
 
 		damping(std::stof(params["boundary_damping"])),
 		min_box_bound(make_float3(std::stof(params["min_box_x"]), std::stof(params["min_box_y"]), std::stof(params["min_box_z"]))),
