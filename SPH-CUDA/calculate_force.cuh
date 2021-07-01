@@ -34,7 +34,7 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 					while (neighbor_particle_idx != -1) {
 						Particle& particleB = particles[neighbor_particle_idx];
 
-						float3 diff = particleA.pos - particleB.pos;
+						float3 diff = particleB.pos - particleA.pos;
 						float r2 = dot(diff, diff);
 						float r = sqrtf(r2);
 						float r3 = powf(r, 3.);
@@ -46,24 +46,26 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 							float3 r_norm = diff / r;
 
 							// Pressure forces
-							float3 w_press = const_spiky * powf(h - r, 3) * r_norm;
+							float3 w_press = const_spiky * powf(h*h - r*r, 3) * r_norm;
 							float densityB = density_buffer[neighbor_particle_idx];
 							float pressureB = fmaxf(k * (densityB - p0), 0);
-							f_pressure += mass * (pressureA / (densityA * densityA) + pressureB / (densityB * densityB)) * w_press;
+							f_pressure += mass * ((pressureA + pressureB) / (2 * densityB)) * w_press;
+							//f_pressure += mass * (pressureA / (densityA * densityA) + pressureB / (densityB * densityB)) * w_press;
 
 
 							// Viscosity forces
-							float w_vis = -const_visc * (h - r);
+							float w_vis = const_visc * (h - r);
 							float3 v_diff = particleB.vel - particleA.vel;
 							f_viscosity += mass * (v_diff / densityB) * w_vis;
 
 
 							// Surface tension
 							float w_surf = 0;
-							if (0 < r < 1)
-								w_surf = 2/3 - r2 + 0.5 * r3;
-							else if (1 < r < 2)
-								w_surf = 1/6 * powf(2 - r, 3);
+							float q = (r / h) * 2;
+							if (0 < q <= 1)
+								w_surf = 2/3 - powf(q, 2) + 0.5 * powf(q, 3);
+							else if (1 < q < 2)
+								w_surf = 1/6 * powf(2 - q, 3);
 
 							f_surface += mass * const_surf * w_surf * diff;
 
