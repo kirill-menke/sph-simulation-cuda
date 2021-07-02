@@ -173,7 +173,7 @@ bool inFOV(float x, float y) {
     return abs(getAngle2(-denormalizeRadians(glm::radians(camera.Yaw-90)), x-getCamPos().x, y-getCamPos().y)) <= (getFOVrad()/2.0 + glm::radians(10.0));
 }
 
-Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
+Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
     // DEBUG
     #ifdef DEBUG
         glfwSetErrorCallback(error_callback);
@@ -276,6 +276,7 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
 
     // version Info
     std::cout << glGetString(GL_VERSION) << std::endl;
+    std::cout << glGetString(GL_VENDOR) << "\n" << glGetString(GL_RENDERER) << std::endl;
     consoleMessage();
 
     // text init
@@ -284,6 +285,10 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
+
+    glGenBuffers(1, &vertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexArray);
+    glBufferData(GL_ARRAY_BUFFER, objectNum*3*sizeof(float), NULL, GL_DYNAMIC_COPY);
 
     renderer = new Renderer();
     // Shader stuff
@@ -294,7 +299,7 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
         glm::vec3(maxBoundX - radius, maxBoundY + radius, maxBoundZ - radius));
 }
 
-void Visualizer::draw(float* translations, int objectNum) {
+void Visualizer::draw(int objectNum) {
     // Loop until the user closes the window 
     //while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -351,17 +356,14 @@ void Visualizer::draw(float* translations, int objectNum) {
 
     // draw spheres
     sphere->bind();
-    VertexBuffer *instanceVBO = new VertexBuffer(translations, objectNum*3*sizeof(translations[0]));
+    glBindBuffer(GL_ARRAY_BUFFER, vertexArray);
     glEnableVertexAttribArray(3);
-    instanceVBO->bind();
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glVertexAttribDivisor(3, 1);  
 
     IndexBuffer* ibo = sphere->ibo;
     ibo->bind();
     glDrawElementsInstanced(GL_TRIANGLES, ibo->getCount(), GL_UNSIGNED_INT, (void*)0, objectNum);
-
-    delete instanceVBO;
 
     // draw box
     shader->setFloat("alpha", 0.2f);

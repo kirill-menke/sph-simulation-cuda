@@ -11,6 +11,8 @@
 #include "integrators.cuh"
 
 #include "visualizer.h"
+#include "particlePositionCopy.cu"
+#include <cuda_gl_interop.h>
 
 void initializeParticles(std::vector<Particle>&, Parameters&);
 
@@ -34,7 +36,6 @@ int main() {
 	size_t bytes_struct = sizeof(Particle) * params.particle_num;
 	size_t bytes_particle_list = sizeof(int) * params.particle_num;
 	size_t bytes_cell_list = sizeof(int) * params.cell_num;
-
 	checkError(cudaMalloc((void**)&d_particle_list, bytes_particle_list));
 	checkError(cudaMalloc((void**)&d_cell_list, bytes_cell_list));
 	checkError(cudaMalloc((void**)&d_particles, bytes_struct));
@@ -47,10 +48,11 @@ int main() {
 	checkError(cudaMemcpy(d_cell_list, cell_list.data(), bytes_cell_list, cudaMemcpyHostToDevice));
 
 	/* Visualization init */
-	float* translations = new float[params.particle_num * 3];
-	Visualizer vis(params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
+	Visualizer vis(params.particle_num, params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
 		params.max_box_bound.x, params.max_box_bound.y, params.max_box_bound.z);
 
+	struct cudaGraphicsResource* positionsVBO_CUDA = NULL;
+	checkError(cudaGraphicsGLRegisterBuffer(&positionsVBO_CUDA, vis.vertexArray, cudaGraphicsMapFlagsWriteDiscard));
 
 	std::cout << "Simulation started" << std::endl;
 	while (!glfwWindowShouldClose(vis.window)) {
@@ -85,13 +87,15 @@ int main() {
 		checkError(cudaDeviceSynchronize());
 
 		/* Visualization update */
-		checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
-		for (int i = 0; i < particles.size(); i++) {
-			translations[i*3 + 0] = particles[i].pos.x;
-			translations[i*3 + 1] = particles[i].pos.y;
-			translations[i*3 + 2] = particles[i].pos.z;
-		}
-		vis.draw(translations, params.particle_num);
+		void* vertexPointer = nullptr;
+		// Map the buffer to CUDA
+		cudaGLMapBufferObject((void**)vertexPointer, vis.vertexArray);
+		// Run kernel
+		copy_particle_positions<<<params.thread_groups_part, params.threads_per_group>>>((float*)vertexPointer, d_particles, params.particle_num);
+		// Unmap the buffer
+		cudaGLUnmapBufferObject(vis.vertexArray);
+
+		vis.draw(params.particle_num);
 	}
 
 	std::cout << "Simulation finished" << std::endl;
