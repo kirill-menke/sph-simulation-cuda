@@ -30,8 +30,8 @@ all angles in degrees
 
 // Default camera values
 const float YAW         =  0.0f;
-const float PITCH       =  0.0f;
-const float SPEED       =  25.0f;
+const float PITCH       =  -25.0f;
+const float SPEED       =  5.0f;
 const float SENSITIVITY =  0.1f;
 const float ZOOM        =  60.0f;
 

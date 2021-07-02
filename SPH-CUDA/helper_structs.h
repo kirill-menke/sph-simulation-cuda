@@ -35,7 +35,7 @@ struct Parameters {
 	float const_visc;
 	float const_surf;
 
-	/* Pressure constant */
+	/* Pressure constant / stiffness */
 	float k;
 	/* Reference pressure */
 	float p0;
@@ -75,7 +75,7 @@ struct Parameters {
 		particle_num(std::stoi(params["particle_num"])),
 		time_step(std::stof(params["timestep"])),
 
-		integrator(Integrator::ForwardEuler),
+		integrator(params["integrator"] == "euler" ? Integrator::ForwardEuler : Integrator::Leapfrog),
 
 		const_poly6(315 / (64 * float(M_PI) * powf(h, 9))),
 		const_spiky(-45 / (float(M_PI) * powf(h, 6))),
@@ -89,7 +89,7 @@ struct Parameters {
 		damping(std::stof(params["boundary_damping"])),
 		min_box_bound(make_float3(std::stof(params["min_box_x"]), std::stof(params["min_box_y"]), std::stof(params["min_box_z"]))),
 		max_box_bound(make_float3(std::stof(params["max_box_x"]), std::stof(params["max_box_y"]), std::stof(params["max_box_z"]))),
-		cell_dims((max_box_bound - min_box_bound) / h),
+		cell_dims(((max_box_bound - min_box_bound) / h) + 1.),
 		cell_size((max_box_bound - min_box_bound) / cell_dims),
 		cell_num(int(cell_dims.x* cell_dims.y* cell_dims.z)),
 

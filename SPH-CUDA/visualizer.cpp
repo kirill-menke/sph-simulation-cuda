@@ -15,7 +15,7 @@ const float farViewDistance = 1000.0;
 
 // camera
 // Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-Camera camera(glm::vec3(-3.0f, 0.50f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera camera(glm::vec3(-5.5f, 4.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -291,7 +291,7 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
     // Load meshes
     sphere = new Sphere(radius, 8, 8);
     box = new Box(glm::vec3(minBoundX - radius, minBoundY - radius, minBoundZ - radius), 
-        glm::vec3(maxBoundX - radius, maxBoundY + radius, maxBoundZ - radius));
+        glm::vec3(maxBoundX + radius, maxBoundY + radius, maxBoundZ + radius));
 }
 
 void Visualizer::draw(float* translations, int objectNum) {

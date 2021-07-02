@@ -51,37 +51,7 @@ int main() {
 	Visualizer vis(params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
 		params.max_box_bound.x, params.max_box_bound.y, params.max_box_bound.z);
 
-	/* Initialize cell list and particle list */
-	assign_to_cells << <params.thread_groups_part, params.threads_per_group >> > (d_particles, d_cell_list, d_particle_list,
-		params.particle_num, params.cell_dims, params.min_box_bound, params.h_inv);
-	checkError(cudaPeekAtLastError());
-	checkError(cudaDeviceSynchronize());
-
-	/* Calculate densities */
-	calculate_density << <params.thread_groups_part, params.threads_per_group >> > (d_particles, d_cell_list, d_particle_list, d_density_buffer,
-		params.cell_dims, params.min_box_bound, params.particle_num, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
-	checkError(cudaPeekAtLastError());
-	checkError(cudaDeviceSynchronize());
-
-	/* Calculate forces */
-	calculate_force << <params.thread_groups_part, params.threads_per_group >> > (d_particles, d_cell_list, d_particle_list, d_force_buffer, d_density_buffer, params.cell_dims, params.min_box_bound,
-		params.particle_num, params.h, params.h_inv, params.const_spiky, params.const_visc, params.const_surf, params.mass, params.k, params.e, params.p0, params.s, params.g);
-	checkError(cudaPeekAtLastError());
-	checkError(cudaDeviceSynchronize());
-
-
-	std::cout << "Simulation started" << std::endl;
-	while (!glfwWindowShouldClose(vis.window)) {
-
-		/* Integrate position and velocity */
-		leapfrog_pre_integration<<<params.thread_groups_part, params.threads_per_group>>>(d_particles, d_force_buffer, params.mass_inv, params.time_step, 
-			params.particle_num, params.min_box_bound, params.max_box_bound, params.damping);
-
-		/* Set all entries of cell list to -1 */
-		reset_cell_list << <params.thread_groups_cell, params.threads_per_group >> > (d_cell_list, params.cell_num);
-		checkError(cudaPeekAtLastError());
-		checkError(cudaDeviceSynchronize());
-
+	if (params.integrator == Integrator::Leapfrog) {
 		/* Initialize cell list and particle list */
 		assign_to_cells << <params.thread_groups_part, params.threads_per_group >> > (d_particles, d_cell_list, d_particle_list,
 			params.particle_num, params.cell_dims, params.min_box_bound, params.h_inv);
@@ -99,14 +69,54 @@ int main() {
 			params.particle_num, params.h, params.h_inv, params.const_spiky, params.const_visc, params.const_surf, params.mass, params.k, params.e, params.p0, params.s, params.g);
 		checkError(cudaPeekAtLastError());
 		checkError(cudaDeviceSynchronize());
+	}
+	
+	std::cout << "Simulation started" << std::endl;
+	std::cout << params.spawn_dist << std::endl;
+	while (!glfwWindowShouldClose(vis.window)) {
 
-		/* Integrate new positions and velocities */
-		//integrate_symplectic_euler << <params.thread_groups_part, params.threads_per_group >> >
-		//	(d_particles, d_force_buffer, params.time_step, params.particle_num, params.min_box_bound, params.max_box_bound, params.damping);
-		//checkError(cudaPeekAtLastError());
-		//checkError(cudaDeviceSynchronize());
+		if (params.integrator == Integrator::Leapfrog) {
+			/* Integrate position and velocity */
+			leapfrog_pre_integration<<<params.thread_groups_part, params.threads_per_group>>> (d_particles, d_force_buffer, params.mass_inv, params.time_step,
+				params.particle_num, params.min_box_bound, params.max_box_bound, params.damping);
+		}
 
-		leapfrog_post_integration<<<params.thread_groups_part, params.threads_per_group>>>(d_particles, d_force_buffer, params.mass_inv, params.time_step, params.particle_num);
+		/* Set all entries of cell list to -1 */
+		reset_cell_list<<<params.thread_groups_cell, params.threads_per_group>>> (d_cell_list, params.cell_num);
+		checkError(cudaPeekAtLastError());
+		checkError(cudaDeviceSynchronize());
+
+		/* Initialize cell list and particle list */
+		assign_to_cells<<<params.thread_groups_part, params.threads_per_group>>> (d_particles, d_cell_list, d_particle_list,
+			params.particle_num, params.cell_dims, params.min_box_bound, params.h_inv);
+		checkError(cudaPeekAtLastError());
+		checkError(cudaDeviceSynchronize());
+
+		/* Calculate densities */
+		calculate_density<<<params.thread_groups_part, params.threads_per_group>>> (d_particles, d_cell_list, d_particle_list, d_density_buffer,
+			params.cell_dims, params.min_box_bound, params.particle_num, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
+		checkError(cudaPeekAtLastError());
+		checkError(cudaDeviceSynchronize());
+
+		/* Calculate forces */
+		calculate_force<<<params.thread_groups_part, params.threads_per_group>>> (d_particles, d_cell_list, d_particle_list, d_force_buffer, d_density_buffer, params.cell_dims, params.min_box_bound,
+			params.particle_num, params.h, params.h_inv, params.const_spiky, params.const_visc, params.const_surf, params.mass, params.k, params.e, params.p0, params.s, params.g);
+		checkError(cudaPeekAtLastError());
+		checkError(cudaDeviceSynchronize());
+
+		if (params.integrator == Integrator::Leapfrog) {
+			/* Integrate new positions and velocities */
+			leapfrog_post_integration<<<params.thread_groups_part, params.threads_per_group>>> 
+				(d_particles, d_force_buffer, params.mass_inv, params.time_step, params.particle_num, params.min_box_bound, params.max_box_bound, params.damping);
+		}
+		else {
+			/* Integrate new positions and velocities */
+			integrate_symplectic_euler<<<params.thread_groups_part, params.threads_per_group>>>
+				(d_particles, d_force_buffer, params.time_step, params.particle_num, params.min_box_bound, params.max_box_bound, params.damping);
+			checkError(cudaPeekAtLastError());
+			checkError(cudaDeviceSynchronize());
+		}
+		
 
 		/* Visualization update */
 		checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
