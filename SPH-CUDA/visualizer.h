@@ -35,9 +35,11 @@
 
 class Visualizer {
 public:
-    Visualizer(float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ);
-    void draw(float* translations, int objectNum);
+    Visualizer(int objectNum,float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ);
+    void draw(int objectNum);
     void end();
+
+    GLuint vertexArray;
     
     GLFWwindow* window;
 
