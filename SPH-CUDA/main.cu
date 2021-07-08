@@ -57,6 +57,9 @@ int main() {
 	std::cout << "Simulation started" << std::endl;
 	while (!glfwWindowShouldClose(vis.window)) {
 
+		// Start time measurement
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
 		/* Set all entries of cell list to -1 */
 		reset_cell_list << <params.thread_groups_cell, params.threads_per_group >> > (d_cell_list, params.cell_num);
 		checkError(cudaPeekAtLastError());
@@ -86,16 +89,27 @@ int main() {
 		checkError(cudaPeekAtLastError());
 		checkError(cudaDeviceSynchronize());
 
+		// Stop time measurement
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		std::cout << "Time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+
 		/* Visualization update */
-		void* vertexPointer = nullptr;
+		float* vertexPointer;
 		// Map the buffer to CUDA
-		cudaGLMapBufferObject((void**)vertexPointer, vis.vertexArray);
+		checkError(cudaGraphicsMapResources(1, &positionsVBO_CUDA));
+		size_t numBytes;
+		checkError(cudaGraphicsResourceGetMappedPointer((void **)&vertexPointer, &numBytes, positionsVBO_CUDA));
 		// Run kernel
 		copy_particle_positions<<<params.thread_groups_part, params.threads_per_group>>>((float*)vertexPointer, d_particles, params.particle_num);
 		// Unmap the buffer
-		cudaGLUnmapBufferObject(vis.vertexArray);
+		checkError(cudaGraphicsUnmapResources(1, &positionsVBO_CUDA));
 
 		vis.draw(params.particle_num);
+
+		// Stop time measurement
+		end = std::chrono::steady_clock::now();
+		std::cout << "Time2 = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+
 	}
 
 	std::cout << "Simulation finished" << std::endl;
