@@ -2,11 +2,6 @@
 #include <cmath>
 #include "visualizer.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window);
-
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -19,6 +14,8 @@ Camera camera(glm::vec3(-50.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+
+bool mousePressed = false;
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -85,11 +82,6 @@ static void error_callback(int error, const char* description) {
     fprintf(stderr, "GLFW Error: %s\n", description);
 }
 #endif
-
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
 
 // set by framebuffersize callback:
 float aspectRatio;
@@ -230,6 +222,7 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // set viewport on window resize
     // mouse callback functions for camera control
     glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
     // keyboard callback functions
     glfwSetKeyCallback(window, key_callback);
@@ -293,6 +286,8 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
     box = new Box(glm::vec3(minBoundX - radius, minBoundY - radius, minBoundZ - radius), 
         glm::vec3(maxBoundX - radius, maxBoundY + radius, maxBoundZ - radius));
 }
+
+bool Visualizer::runSimulation = true;
 
 void Visualizer::draw(float* translations, int objectNum) {
     // Loop until the user closes the window 
@@ -422,6 +417,12 @@ void Visualizer::end() {
     exit(EXIT_SUCCESS);
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+        Visualizer::runSimulation = !Visualizer::runSimulation;
+}
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -470,6 +471,17 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     aspectRatio = (float)viewportWidth / (float)viewportHeight;
 }
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            mousePressed = true;
+        }
+        if (action == GLFW_RELEASE) {
+            mousePressed = false;
+        }
+    }
+}
 
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
@@ -488,7 +500,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    //if (mousePressed)
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+        camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
