@@ -11,6 +11,8 @@
 #include "integrators.cuh"
 
 #include "visualizer.h"
+#include "particlePositionCopy.cu"
+#include <cuda_gl_interop.h>
 
 void initializeDamParticles(std::vector<Particle>&, Parameters&);
 void initializeParticles(std::vector<Particle>&, Parameters&);
@@ -57,9 +59,11 @@ int main() {
 	checkError(cudaMemcpy(d_density_buffer, densities.data(), bytes_vec, cudaMemcpyHostToDevice));
 
 	/* Visualization init */
-	float* translations = new float[params.movable_particle_num * 3];
-	Visualizer vis(params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
+	Visualizer vis(params.movable_particle_num, params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
 		params.max_box_bound.x, params.max_box_bound.y, params.max_box_bound.z);
+
+	struct cudaGraphicsResource* positionsVBO_CUDA = NULL;
+	checkError(cudaGraphicsGLRegisterBuffer(&positionsVBO_CUDA, vis.vertexArray, cudaGraphicsMapFlagsWriteDiscard));
 
 	if (params.integrator == Integrator::Leapfrog) {
 		/* Initialize cell list and particle list */
@@ -84,6 +88,9 @@ int main() {
 	std::cout << "Simulation started" << std::endl;
 	std::cout << params.spawn_dist << std::endl;
 	while (!glfwWindowShouldClose(vis.window)) {
+
+		// Start time measurement
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
 		if (params.integrator == Integrator::Leapfrog) {
 			/* Integrate position and velocity */
@@ -128,14 +135,27 @@ int main() {
 		}
 		
 
+		// Stop time measurement
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		std::cout << "Time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+
 		/* Visualization update */
-		checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
-		for (int i = 0; i < params.movable_particle_num; i++) {
-			translations[i*3 + 0] = particles[i + params.immovable_particle_num].pos.x;
-			translations[i*3 + 1] = particles[i + params.immovable_particle_num].pos.y;
-			translations[i*3 + 2] = particles[i + params.immovable_particle_num].pos.z;
-		}
-		vis.draw(translations, params.movable_particle_num);
+		float* vertexPointer;
+		// Map the buffer to CUDA
+		checkError(cudaGraphicsMapResources(1, &positionsVBO_CUDA));
+		size_t numBytes;
+		checkError(cudaGraphicsResourceGetMappedPointer((void **)&vertexPointer, &numBytes, positionsVBO_CUDA));
+		// Run kernel
+		copy_particle_positions<<<params.thread_groups_part, params.threads_per_group>>>((float*)vertexPointer, d_particles, total_particle_num, params.immovable_particle_num);
+		// Unmap the buffer
+		checkError(cudaGraphicsUnmapResources(1, &positionsVBO_CUDA));
+
+		vis.draw(params.movable_particle_num);
+
+		// Stop time measurement
+		end = std::chrono::steady_clock::now();
+		std::cout << "Time2 = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+
 	}
 
 	std::cout << "Simulation finished" << std::endl;
