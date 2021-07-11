@@ -4,15 +4,17 @@
 #include "helper_structs.h"
 #include "helper_math.h"
 
+#include "cell_structure.cuh"
+
 __global__ void 
 calculate_density(Particle* particles, int* cell_list, int* particle_list, float* density_buffer,
-	float3 cell_dims, float3 min_box_bound, int N, float h, float h2, float h_inv, float const_poly6, float mass, float p0) {
+	float3 cell_dims, float3 min_box_bound, int N, int immovable_particle_num, float h, float h2, float h_inv, float const_poly6, float mass, float p0) {
 
-	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int tid = (blockIdx.x * blockDim.x) + threadIdx.x + immovable_particle_num;
 
-	if (tid < N) {
+	if (tid >= immovable_particle_num && tid < N) {
 		Particle& particleA = particles[tid];
-		int3 cell_idx = floor((particleA.pos - min_box_bound) * h_inv);
+		int3 cell_idx = calculate_cell_idx(particleA, min_box_bound, h, h_inv, tid);
 		float density = 0;
 
 		for (int x = -1; x <= 1; x++) {

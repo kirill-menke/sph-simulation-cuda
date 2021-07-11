@@ -4,15 +4,17 @@
 #include "helper_structs.h"
 #include "helper_math.h"
 
+#include "cell_structure.cuh"
+
 __global__ void
 calculate_force(Particle* particles, int* cell_list, int* particle_list, float3* force_buffer, float* density_buffer, float3 cell_dims, float3 min_box_bound, 
-	int N, float h, float h_inv, float const_spiky, float const_visc, float const_surf, const float mass, float k, float e, float p0, float s, float3 g) {
+	int N, int immovable_particle_num, float h, float h_inv, float const_spiky, float const_visc, float const_surf, const float mass, float k, float e, float p0, float s, float3 g) {
 
-	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
+	int tid = (blockIdx.x * blockDim.x) + threadIdx.x + immovable_particle_num;
 
-	if (tid < N) {
+	if (tid >= immovable_particle_num && tid < N) {
 		Particle& particleA = particles[tid];
-		int3 cell_idx = floor((particleA.pos - min_box_bound) * h_inv);
+		int3 cell_idx = calculate_cell_idx(particleA, min_box_bound, h, h_inv, tid);
 
 		float3 f_pressure = make_float3(0, 0, 0);
 		float3 f_viscosity = make_float3(0, 0, 0);
@@ -58,15 +60,15 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 							f_viscosity += mass * (v_diff / densityB) * w_vis;
 
 
-							// Surface tension
-							float w_surf = 0;
-							float q = (r / h) * 2;
-							if (0 < q <= 1)
-								w_surf = 2/3 - powf(q, 2) + 0.5 * powf(q, 3);
-							else if (1 < q < 2)
-								w_surf = 1/6 * powf(2 - q, 3);
+							//// Surface tension
+							//float w_surf = 0;
+							//float q = (r / h) * 2;
+							//if (0 < q <= 1)
+							//	w_surf = 2/3 - powf(q, 2) + 0.5 * powf(q, 3);
+							//else if (1 < q < 2)
+							//	w_surf = 1/6 * powf(2 - q, 3);
 
-							f_surface += mass * const_surf * w_surf * diff;
+							//f_surface += mass * const_surf * w_surf * diff;
 
 						}
 

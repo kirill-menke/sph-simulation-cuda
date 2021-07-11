@@ -290,8 +290,8 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
     shader = new Shader("src/Shaders/shader");
     // Load meshes
     sphere = new Sphere(radius, 8, 8);
-    box = new Box(glm::vec3(minBoundX - radius, minBoundY - radius, minBoundZ - radius), 
-        glm::vec3(maxBoundX + radius, maxBoundY + radius, maxBoundZ + radius));
+    box = new Box(glm::vec3(minBoundX + 2 * radius, minBoundY + 2 * radius, minBoundZ + 2 * radius),
+        glm::vec3(maxBoundX - 2 * radius, maxBoundY - 2 * radius, maxBoundZ - 2 * radius));
 }
 
 void Visualizer::draw(float* translations, int objectNum) {
