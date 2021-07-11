@@ -130,7 +130,7 @@ int main() {
 
 		/* Visualization update */
 		checkError(cudaMemcpy(particles.data(), d_particles, bytes_struct, cudaMemcpyDeviceToHost));
-		for (int i = 0; i < params.movable_particle_num; i++){// particles.size(); i++) {
+		for (int i = 0; i < params.movable_particle_num; i++) {
 			translations[i*3 + 0] = particles[i + params.immovable_particle_num].pos.x;
 			translations[i*3 + 1] = particles[i + params.immovable_particle_num].pos.y;
 			translations[i*3 + 2] = particles[i + params.immovable_particle_num].pos.z;
