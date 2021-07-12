@@ -15,6 +15,11 @@ inline __host__ __device__ float3 operator+(float3 a, float3 b)
     return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
 
+inline __host__ __device__ float3 operator+(float3 a, float b)
+{
+    return make_float3(a.x + b, a.y + b, a.z + b);
+}
+
 inline __host__ __device__ int3 operator+(int3 a, int3 b)
 {
     return make_int3(a.x + b.x, a.y + b.y, a.z + b.z);
@@ -129,6 +134,13 @@ inline __host__ __device__ int3 floor(float3 v)
 {
     int3 floored_num = make_int3(int(v.x - (v.x - floorf(v.x))), int(v.y - (v.y - floorf(v.y))), int(v.z - (v.z - floorf(v.z))));
     return floored_num;
+}
+
+// Ceil
+inline __host__ __device__ int3 ceil(float3 v)
+{
+    int3 ceiled_num = make_int3(ceil(v.x), ceil(v.y), ceil(v.z));
+    return ceiled_num;
 }
 
 // Pow

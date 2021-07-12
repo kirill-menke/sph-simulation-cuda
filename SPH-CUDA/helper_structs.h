@@ -17,7 +17,8 @@ enum class Integrator {
 
 struct Parameters {
 
-	int particle_num;
+	int movable_particle_num;
+	int immovable_particle_num;
 	float time_step;
 
 	/* Integration method */
@@ -35,7 +36,7 @@ struct Parameters {
 	float const_visc;
 	float const_surf;
 
-	/* Pressure constant */
+	/* Pressure constant / stiffness */
 	float k;
 	/* Reference pressure */
 	float p0;
@@ -45,6 +46,7 @@ struct Parameters {
 	float s;
 	/* Particle mass */
 	float mass;
+	float mass_inv;
 	/* Gravity */
 	float3 g;
 
@@ -55,6 +57,8 @@ struct Parameters {
 	float3 cell_dims;
 	float3 cell_size;
 	int cell_num;
+	int3 particle_depth_per_dim; // unit: particles
+	float wall_density;
 
 	/* GPU parameters */
 	int threads_per_group;
@@ -63,6 +67,7 @@ struct Parameters {
 
 	/* Particle spawn parameters */
 	float spawn_dist;		// unit: coordinates
+	float boundary_spawn_dist;
 	int edge_length;		// unit: particles
 	float3 spawn_offset;	// unit: coordinates
 
@@ -71,37 +76,47 @@ struct Parameters {
 
 
 	Parameters(std::unordered_map<std::string, std::string> params) :
-		particle_num(std::stoi(params["particle_num"])),
+		movable_particle_num(std::stoi(params["movable_particle_num"])),
 		time_step(std::stof(params["timestep"])),
 
-		integrator(Integrator::ForwardEuler),
+		integrator(params["integrator"] == "euler" ? Integrator::ForwardEuler : Integrator::Leapfrog),
 
 		const_poly6(315 / (64 * float(M_PI) * powf(h, 9))),
-		const_spiky(15 / (float(M_PI) * powf(h, 6))),
+		const_spiky(-45 / (float(M_PI) * powf(h, 6))),
 		const_visc(15 / (2 * float(M_PI) * powf(h, 3))),
 		const_surf(3 / (2 * float(M_PI) * powf(h, 3))),
 
 		h(std::stof(params["h"])), h_inv(1 / h), h2(h* h), h3(h* h* h),
 		k(std::stof(params["k"])), p0(std::stof(params["p0"])), e(std::stof(params["e"])), s(std::stof(params["s"])), 
-		mass(std::stof(params["mass"])), g(make_float3(0, std::stof(params["g"]), 0)),
+		mass(std::stof(params["mass"])), g(make_float3(0, std::stof(params["g"]), 0)), mass_inv(1. / mass),
 
 		damping(std::stof(params["boundary_damping"])),
+		wall_density(std::stof(params["wall_density"])),
 		min_box_bound(make_float3(std::stof(params["min_box_x"]), std::stof(params["min_box_y"]), std::stof(params["min_box_z"]))),
 		max_box_bound(make_float3(std::stof(params["max_box_x"]), std::stof(params["max_box_y"]), std::stof(params["max_box_z"]))),
-		cell_dims((max_box_bound - min_box_bound) / h),
-		cell_size((max_box_bound - min_box_bound) / cell_dims),
+		cell_dims(((max_box_bound - min_box_bound) / h) + 1.),
+		//cell_size((max_box_bound - min_box_bound) / cell_dims),
 		cell_num(int(cell_dims.x* cell_dims.y* cell_dims.z)),
 
 		threads_per_group(std::stoi(params["threads_per_group"])),
-		thread_groups_part(int((particle_num + threads_per_group - 1) / threads_per_group)),
+		thread_groups_part(int((movable_particle_num + threads_per_group - 1) / threads_per_group)),
 		thread_groups_cell(int((cell_num + threads_per_group - 1) / threads_per_group)),
 
 		spawn_dist(std::stof(params["spawn_dist"])),
-		edge_length(powf(particle_num, 1./3.)),
+		boundary_spawn_dist(std::stof(params["boundary_spawn_dist"])),
+		edge_length(powf(movable_particle_num, 1./3.)),
 		spawn_offset(make_float3(std::stof(params["spawn_off_x"]), std::stof(params["spawn_off_y"]), std::stof(params["spawn_off_z"]))),
 
 		particle_radius(std::stof(params["particle_radius"]))
-	{}
+	{
+		// Calculate number of particles per wall
+		// Currently only for a cubic shape
+		float3 box_dim = max_box_bound - min_box_bound;
+		particle_depth_per_dim = ceil(box_dim / boundary_spawn_dist);
+
+		// Shape without ceiling
+		immovable_particle_num = particle_depth_per_dim.x * particle_depth_per_dim.y * 2 + particle_depth_per_dim.z * particle_depth_per_dim.y * 2 + particle_depth_per_dim.z * particle_depth_per_dim.x;
+	}
 };
 
 

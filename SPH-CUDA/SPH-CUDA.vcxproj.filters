@@ -48,6 +48,9 @@
     <None Include="parameter_files\params_0.par">
       <Filter>parameter_files</Filter>
     </None>
+    <None Include="parameter_files\params_working.par">
+      <Filter>parameter_files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="error_checker.h">

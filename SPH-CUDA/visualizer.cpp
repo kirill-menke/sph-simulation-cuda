@@ -10,7 +10,7 @@ const float farViewDistance = 1000.0;
 
 // camera
 // Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-Camera camera(glm::vec3(-50.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera camera(glm::vec3(-5.5f, 4.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -165,7 +165,7 @@ bool inFOV(float x, float y) {
     return abs(getAngle2(-denormalizeRadians(glm::radians(camera.Yaw-90)), x-getCamPos().x, y-getCamPos().y)) <= (getFOVrad()/2.0 + glm::radians(10.0));
 }
 
-Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
+Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
     // DEBUG
     #ifdef DEBUG
         glfwSetErrorCallback(error_callback);
@@ -269,6 +269,7 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
 
     // version Info
     std::cout << glGetString(GL_VERSION) << std::endl;
+    std::cout << glGetString(GL_VENDOR) << "\n" << glGetString(GL_RENDERER) << std::endl;
     consoleMessage();
 
     // text init
@@ -278,18 +279,22 @@ Visualizer::Visualizer(float radius, float minBoundX, float minBoundY, float min
 		exit(EXIT_FAILURE);
 	}
 
+    glGenBuffers(1, &vertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexArray);
+    glBufferData(GL_ARRAY_BUFFER, objectNum*3*sizeof(float), NULL, GL_DYNAMIC_COPY);
+
     renderer = new Renderer();
     // Shader stuff
     shader = new Shader("src/Shaders/shader");
     // Load meshes
     sphere = new Sphere(radius, 8, 8);
-    box = new Box(glm::vec3(minBoundX - radius, minBoundY - radius, minBoundZ - radius), 
-        glm::vec3(maxBoundX - radius, maxBoundY + radius, maxBoundZ - radius));
+    box = new Box(glm::vec3(minBoundX + 2 * radius, minBoundY + 2 * radius, minBoundZ + 2 * radius),
+        glm::vec3(maxBoundX - 2 * radius, maxBoundY - 2 * radius, maxBoundZ - 2 * radius));
 }
 
 bool Visualizer::runSimulation = true;
 
-void Visualizer::draw(float* translations, int objectNum) {
+void Visualizer::draw(int objectNum) {
     // Loop until the user closes the window 
     //while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -346,17 +351,14 @@ void Visualizer::draw(float* translations, int objectNum) {
 
     // draw spheres
     sphere->bind();
-    VertexBuffer *instanceVBO = new VertexBuffer(translations, objectNum*3*sizeof(translations[0]));
+    glBindBuffer(GL_ARRAY_BUFFER, vertexArray);
     glEnableVertexAttribArray(3);
-    instanceVBO->bind();
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glVertexAttribDivisor(3, 1);  
 
     IndexBuffer* ibo = sphere->ibo;
     ibo->bind();
     glDrawElementsInstanced(GL_TRIANGLES, ibo->getCount(), GL_UNSIGNED_INT, (void*)0, objectNum);
-
-    delete instanceVBO;
 
     // draw box
     shader->setFloat("alpha", 0.2f);
