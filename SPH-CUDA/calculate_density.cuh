@@ -14,7 +14,10 @@ calculate_density(Particle* particles, int* cell_list, int* particle_list, float
 
 	if (tid >= immovable_particle_num && tid < N) {
 		Particle& particleA = particles[tid];
-		int3 cell_idx = calculate_cell_idx(particleA, min_box_bound, h, h_inv, tid);
+		int3 cell_idx = calculate_cell_idx(particleA, min_box_bound, cell_dims, h_inv, tid);
+		if (cell_idx.x == -1) {
+			return;
+		}
 		float density = 0;
 
 		for (int x = -1; x <= 1; x++) {

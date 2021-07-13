@@ -139,7 +139,7 @@ inline __host__ __device__ int3 floor(float3 v)
 // Ceil
 inline __host__ __device__ int3 ceil(float3 v)
 {
-    int3 ceiled_num = make_int3(ceil(v.x), ceil(v.y), ceil(v.z));
+    int3 ceiled_num = make_int3(ceilf(v.x), ceilf(v.y), ceilf(v.z));
     return ceiled_num;
 }
 

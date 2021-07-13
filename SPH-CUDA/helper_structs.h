@@ -73,7 +73,9 @@ struct Parameters {
 
 	/* Visualization parameters */
 	float particle_radius;
+	int draw_number;
 
+	//#define RENDERWALLS
 
 	Parameters(std::unordered_map<std::string, std::string> params) :
 		movable_particle_num(std::stoi(params["movable_particle_num"])),
@@ -95,11 +97,9 @@ struct Parameters {
 		min_box_bound(make_float3(std::stof(params["min_box_x"]), std::stof(params["min_box_y"]), std::stof(params["min_box_z"]))),
 		max_box_bound(make_float3(std::stof(params["max_box_x"]), std::stof(params["max_box_y"]), std::stof(params["max_box_z"]))),
 		cell_dims(((max_box_bound - min_box_bound) / h) + 1.),
-		//cell_size((max_box_bound - min_box_bound) / cell_dims),
 		cell_num(int(cell_dims.x* cell_dims.y* cell_dims.z)),
 
 		threads_per_group(std::stoi(params["threads_per_group"])),
-		thread_groups_part(int((movable_particle_num + threads_per_group - 1) / threads_per_group)),
 		thread_groups_cell(int((cell_num + threads_per_group - 1) / threads_per_group)),
 
 		spawn_dist(std::stof(params["spawn_dist"])),
@@ -109,13 +109,21 @@ struct Parameters {
 
 		particle_radius(std::stof(params["particle_radius"]))
 	{
-		// Calculate number of particles per wall
-		// Currently only for a cubic shape
+		/* Calculate number of particles per wall */
 		float3 box_dim = max_box_bound - min_box_bound;
 		particle_depth_per_dim = ceil(box_dim / boundary_spawn_dist);
-
-		// Shape without ceiling
+		// Calculate number of particles for five walls without ceiling
 		immovable_particle_num = particle_depth_per_dim.x * particle_depth_per_dim.y * 2 + particle_depth_per_dim.z * particle_depth_per_dim.y * 2 + particle_depth_per_dim.z * particle_depth_per_dim.x;
+		
+		// Choose number of threads as maximum of immovable and moveable particles
+		int thread_count = max(immovable_particle_num, movable_particle_num);
+		thread_groups_part = int((thread_count + threads_per_group - 1) / threads_per_group);
+
+		#if defined(RENDERWALLS)
+			draw_number = immovable_particle_num + movable_particle_num;
+		#else
+			draw_number = movable_particle_num;
+		#endif
 	}
 };
 

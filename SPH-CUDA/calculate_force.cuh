@@ -14,7 +14,10 @@ calculate_force(Particle* particles, int* cell_list, int* particle_list, float3*
 
 	if (tid >= immovable_particle_num && tid < N) {
 		Particle& particleA = particles[tid];
-		int3 cell_idx = calculate_cell_idx(particleA, min_box_bound, h, h_inv, tid);
+		int3 cell_idx = calculate_cell_idx(particleA, min_box_bound, cell_dims, h_inv, tid);
+		if (cell_idx.x == -1) {
+			return;
+		}
 
 		float3 f_pressure = make_float3(0, 0, 0);
 		float3 f_viscosity = make_float3(0, 0, 0);

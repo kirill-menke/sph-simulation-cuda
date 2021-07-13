@@ -14,7 +14,7 @@
 #include "particlePositionCopy.cu"
 #include <cuda_gl_interop.h>
 
-void initializeDamParticles(std::vector<Particle>&, Parameters&);
+void initializeWallParticles(std::vector<Particle>&, Parameters&);
 void initializeParticles(std::vector<Particle>&, Parameters&);
 void placeWallParticles(std::vector<Particle>& particles, Parameters& p, int limit, float3 offset, int3 order);
 void initializeDensity(std::vector<float3>& density, Parameters& p);
@@ -24,7 +24,7 @@ int main() {
 	Parameters params = file_manager.readParams();
 
 	std::vector<Particle> particles;
-	initializeDamParticles(particles, params);
+	initializeWallParticles(particles, params);
 	initializeParticles(particles, params);
 
 	std::vector<float3> densities;
@@ -59,7 +59,7 @@ int main() {
 	checkError(cudaMemcpy(d_density_buffer, densities.data(), bytes_vec, cudaMemcpyHostToDevice));
 
 	/* Visualization init */
-	Visualizer vis(params.movable_particle_num, params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
+	Visualizer vis(params.draw_number, params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
 		params.max_box_bound.x, params.max_box_bound.y, params.max_box_bound.z);
 
 	struct cudaGraphicsResource* positionsVBO_CUDA = NULL;
@@ -149,7 +149,7 @@ int main() {
 			// Unmap the buffer
 			checkError(cudaGraphicsUnmapResources(1, &positionsVBO_CUDA));
 
-			vis.draw(params.movable_particle_num);
+			vis.draw(params.draw_number);
 
 			// Stop time measurement
 			end = std::chrono::steady_clock::now();
@@ -170,45 +170,51 @@ int main() {
 	vis.end();
 }
 
-/* Determines position of dam particles, should be called before initilizing moveable particles */
-void initializeDamParticles(std::vector<Particle>& particles, Parameters& p) {
+/* Determines position of wall particles, should be called before initilizing moveable particles */
+void initializeWallParticles(std::vector<Particle>& particles, Parameters& p) {
 	// Calculate shift in order to spawn the cubic shape in the center of the box
 	// Shift equals half of the length of the cubic shape
 	float shift = p.particle_radius;
 	int wall_num = 5;
+	int limit;
 	float3 offset;
-
-	// boundary in "false" z front
-	offset = make_float3(p.min_box_bound.z + shift, p.min_box_bound.y + shift, p.min_box_bound.x + shift);
-	placeWallParticles(particles, p, p.immovable_particle_num / wall_num, offset, make_int3(2, 1, 0));
-
-	// boundary in "false" z back
-	offset = make_float3(p.min_box_bound.z + shift, p.min_box_bound.y + shift, p.max_box_bound.x - shift);
-	placeWallParticles(particles, p, p.immovable_particle_num / wall_num, offset, make_int3(2, 1, 0));
-
-	// boundary in "false" x right
-	offset = make_float3(p.min_box_bound.x + shift, p.min_box_bound.y + shift, p.max_box_bound.z - shift);
-	placeWallParticles(particles, p, p.immovable_particle_num / wall_num, offset, make_int3(0, 1, 2));
-
-	// boundary in "false" x left
-	offset = make_float3(p.min_box_bound.x + shift, p.min_box_bound.y + shift, p.min_box_bound.z + shift);
-	placeWallParticles(particles, p, p.immovable_particle_num / wall_num, offset, make_int3(0, 1, 2));
 
 	// boundary bottom
 	offset = make_float3(p.min_box_bound.x + shift, p.min_box_bound.z + shift, p.min_box_bound.y + shift);
-	placeWallParticles(particles, p, p.immovable_particle_num / wall_num, offset, make_int3(0, 2, 1));
+	limit = p.particle_depth_per_dim.z * p.particle_depth_per_dim.x;
+	placeWallParticles(particles, p, limit, offset, make_int3(0, 2, 1));
+
+	// boundary in "false" z front
+	offset = make_float3(p.min_box_bound.z + shift, p.min_box_bound.y + shift, p.min_box_bound.x + shift);
+	limit = p.particle_depth_per_dim.z* p.particle_depth_per_dim.y;
+	placeWallParticles(particles, p, limit, offset, make_int3(2, 1, 0));
+
+	// boundary in "false" z back
+	offset = make_float3(p.min_box_bound.z + shift, p.min_box_bound.y + shift, p.max_box_bound.x - shift);
+	limit = p.particle_depth_per_dim.z * p.particle_depth_per_dim.y;
+	placeWallParticles(particles, p, limit, offset, make_int3(2, 1, 0));
+
+	// boundary in "false" x right
+	offset = make_float3(p.min_box_bound.x + shift, p.min_box_bound.y + shift, p.max_box_bound.z - shift);
+	limit = p.particle_depth_per_dim.x * p.particle_depth_per_dim.y;
+	placeWallParticles(particles, p, limit, offset, make_int3(0, 1, 2));
+
+	// boundary in "false" x left
+	offset = make_float3(p.min_box_bound.x + shift, p.min_box_bound.y + shift, p.min_box_bound.z + shift);
+	limit = p.particle_depth_per_dim.x * p.particle_depth_per_dim.y;
+	placeWallParticles(particles, p, limit, offset, make_int3(0, 1, 2));
 
 }
 
 void placeWallParticles(std::vector<Particle>& particles, Parameters& p, int limit, float3 offset, int3 order) {
 	float coordiantes[3];
+	int particle_depths[3] = {p.particle_depth_per_dim.x, p.particle_depth_per_dim.y, p.particle_depth_per_dim.z};
 
 	for (int i = 0; i < limit; i++) {
 
 		// Calculate wall shape
-		// TODO: Fix for non-cubic shapes
-		coordiantes[0] = (i % p.particle_depth_per_dim.x) * p.boundary_spawn_dist;
-		coordiantes[1] = floor((i / p.particle_depth_per_dim.z)) * p.boundary_spawn_dist;
+		coordiantes[0] = (i % particle_depths[order.x]) * p.boundary_spawn_dist;
+		coordiantes[1] = floor((i / particle_depths[order.x])) * p.boundary_spawn_dist;
 
 		// Add offset
 		coordiantes[0] += offset.x;
@@ -243,8 +249,6 @@ void initializeParticles(std::vector<Particle>& particles, Parameters& p) {
 }
 
 void initializeDensity(std::vector<float3>& density, Parameters& p) {
-	// Calculate shift in order to spawn the cubic shape in the center of the box
-	// Shift equals half of the length of the cubic shape
 
 	for (int i = 0; i < p.immovable_particle_num; i++) {
 		density.emplace_back(make_float3(p.wall_density, p.wall_density, p.wall_density));
