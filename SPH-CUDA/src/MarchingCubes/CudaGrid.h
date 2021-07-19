@@ -6,10 +6,10 @@
 
 class CudaGrid {
 public:
-	CudaGrid(uint3 gridSize);
+	CudaGrid(uint3 gridSize, float3 voxelSpacing);
 	void free();
 
-	static CudaGrid Sphere(uint3 gridSize);
+	static CudaGrid Sphere(uint3 gridSize, float3 voxelSpacing);
 
 	struct Voxel {
 		float value;

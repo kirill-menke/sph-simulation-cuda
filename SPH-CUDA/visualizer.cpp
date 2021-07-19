@@ -292,7 +292,7 @@ Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float m
 
     glGenBuffers(1, &triangleArray);
     glBindBuffer(GL_ARRAY_BUFFER, triangleArray);
-    glBufferData(GL_ARRAY_BUFFER, maxNumTriangles*3*sizeof(float), NULL, GL_DYNAMIC_COPY);
+    glBufferData(GL_ARRAY_BUFFER, maxNumTriangles*9*sizeof(float), NULL, GL_DYNAMIC_COPY);
 
     renderer = new Renderer();
     // Shader stuff
@@ -474,15 +474,22 @@ void Visualizer::drawTriangles(int numTriangles) {
     }
 
     // draw spheres
-    sphere->bind();
-    glBindBuffer(GL_ARRAY_BUFFER, vertexArray);
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glVertexAttribDivisor(3, 1);  
-
-    IndexBuffer* ibo = sphere->ibo;
-    ibo->bind();
-    glDrawElementsInstanced(GL_TRIANGLES, ibo->getCount(), GL_UNSIGNED_INT, (void*)0, numTriangles);
+    //sphere->bind();
+    VertexBuffer* vbo = new VertexBuffer(triangleArray);
+    VertexArrayObject* vao = new VertexArrayObject(numTriangles);
+    //ibo = new IndexBuffer(indices.data(), indices.size());
+    AttributeBufferLayout *abl = new AttributeBufferLayout(
+        {
+        {GL_FLOAT, 3},
+        {GL_FLOAT, 3},
+        {GL_FLOAT, 3}
+        },
+        *vbo
+    );
+    vao->addABL(*abl);
+    vbo->bind();
+    vao->bind();
+    renderer->draw(GL_TRIANGLES, *vao, nullptr, 0, 0);
 
     // draw box
     shader->setFloat("alpha", 0.2f);

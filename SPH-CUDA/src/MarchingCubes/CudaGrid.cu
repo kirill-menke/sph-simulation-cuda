@@ -40,8 +40,8 @@ __global__ void sphereKernel(CudaGrid grid) {
 	grid(idx).value = length(pos - center) - radius;
 }
 
-CudaGrid CudaGrid::Sphere(uint3 gridSize) {
-	CudaGrid grid(gridSize);
+CudaGrid CudaGrid::Sphere(uint3 gridSize, float3 voxelSpacing) {
+	CudaGrid grid(gridSize, voxelSpacing);
 
 	const dim3 blockDim(8, 8, 8);
 	const dim3 gridDim((gridSize.x + blockDim.x - 1) / blockDim.x, (gridSize.y + blockDim.y - 1) / blockDim.y, (gridSize.z + blockDim.z - 1) / blockDim.z);

@@ -6,6 +6,10 @@ VertexBuffer::VertexBuffer(const void* data, unsigned int size) {
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_DYNAMIC_DRAW);
 }
 
+VertexBuffer::VertexBuffer(GLuint vertexBuffer_ID) : vb_ID(vertexBuffer_ID) {
+    glBindBuffer(GL_ARRAY_BUFFER, vb_ID);
+}
+
 VertexBuffer::~VertexBuffer() {
     glDeleteBuffers(1, &vb_ID);
 }
