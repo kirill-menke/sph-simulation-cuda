@@ -50,6 +50,7 @@ public:
     Shader* shader;
 
     static bool runSimulation;
+    static bool marchingCubes;
     
     Sphere* sphere;
     Box* box;

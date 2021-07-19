@@ -244,7 +244,7 @@ Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float m
     glfwSwapInterval(0);
 
     // face culling
-    ENABLE_FACE_CULLING = false;
+    ENABLE_FACE_CULLING = true;
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT); // default back
     //glFrontFace(GL_CCW); // default counter-clock-wise
@@ -297,6 +297,7 @@ Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float m
 }
 
 bool Visualizer::runSimulation = true;
+bool Visualizer::marchingCubes = true;
 
 void Visualizer::draw(int objectNum) {
     // Loop until the user closes the window 
@@ -332,8 +333,8 @@ void Visualizer::draw(int objectNum) {
     shader->setMat4("model", model);
 
     //global light source can be either positional => perspecitve OR directional => orthographic
-    glm::vec3 lightPos = glm::vec3(50.0f, 50.0f, 500.0f);
-    glm::vec3 lightDir = glm::normalize(glm::vec3(1, 0.5, -1));
+    glm::vec3 lightPos = glm::vec3(50.0f, 500.0f, 50.0f);
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-1, 1, -0.5));
     bool perspectiveLight = false;
     if (perspectiveLight) {
         lightDir = getCamPos() - lightPos;
@@ -364,15 +365,16 @@ void Visualizer::draw(int objectNum) {
     ibo->bind();
     glDrawElementsInstanced(GL_TRIANGLES, ibo->getCount(), GL_UNSIGNED_INT, (void*)0, objectNum);
 
+    if (ENABLE_FACE_CULLING) {
+        glDisable(GL_CULL_FACE);
+    }
+
     // draw box
     shader->setFloat("alpha", 0.2f);
     box->bind();
     box->draw(renderer);
     shader->setFloat("alpha", 1.0f);
 
-    if (ENABLE_FACE_CULLING) {
-        glDisable(GL_CULL_FACE);
-    }
     float time1 = glfwGetTime();
     float drawTime = (time1-time0)*1000;
 
@@ -447,8 +449,8 @@ void Visualizer::drawTriangles(int numTriangles) {
     shader->setMat4("model", model);
 
     //global light source can be either positional => perspecitve OR directional => orthographic
-    glm::vec3 lightPos = glm::vec3(50.0f, 50.0f, 500.0f);
-    glm::vec3 lightDir = glm::normalize(glm::vec3(1, 0.5, -1));
+    glm::vec3 lightPos = glm::vec3(50.0f, 500.0f, 50.0f);
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-1, 1, -0.5));
     bool perspectiveLight = false;
     if (perspectiveLight) {
         lightDir = getCamPos() - lightPos;
@@ -486,15 +488,16 @@ void Visualizer::drawTriangles(int numTriangles) {
     vao->bind();
     renderer->draw(GL_TRIANGLES, *vao, nullptr, 0, 0);
 
+    if (ENABLE_FACE_CULLING) {
+        glDisable(GL_CULL_FACE);
+    }
+
     // draw box
     shader->setFloat("alpha", 0.2f);
     box->bind();
     box->draw(renderer);
     shader->setFloat("alpha", 1.0f);
 
-    if (ENABLE_FACE_CULLING) {
-        glDisable(GL_CULL_FACE);
-    }
     float time1 = glfwGetTime();
     float drawTime = (time1-time0)*1000;
 
@@ -549,7 +552,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-        Visualizer::runSimulation = !Visualizer::runSimulation;
+        Visualizer::marchingCubes = !Visualizer::marchingCubes;
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly

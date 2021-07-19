@@ -16,7 +16,7 @@ Sphere::Sphere(float radius, int rings, int sectors) : radius(radius), rings(rin
 
         buffer[bufferInd++] = 0.5;
         buffer[bufferInd++] = 0.5;
-        buffer[bufferInd++] = 0.5;
+        buffer[bufferInd++] = 0.8;
 
         buffer[bufferInd++] = -v.x;
         buffer[bufferInd++] = -v.y;

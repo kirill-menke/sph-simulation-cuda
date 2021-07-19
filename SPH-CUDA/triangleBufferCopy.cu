@@ -20,7 +20,7 @@ __global__ void copy_triangles(float* vertexArray, float3* vertices, int N, floa
 
 		vertexArray[tid*9 + 3] = 0.5;
         vertexArray[tid*9 + 4] = 0.5;
-        vertexArray[tid*9 + 5] = 0.5;
+        vertexArray[tid*9 + 5] = 0.8;
 
         vertexArray[tid*9 + 6] = grid(idx).normal.x;
         vertexArray[tid*9 + 7] = grid(idx).normal.y;
@@ -29,7 +29,7 @@ __global__ void copy_triangles(float* vertexArray, float3* vertices, int N, floa
 }
 
 __device__ float get_density(float3 pos, Particle* particles, int* cell_list, int* particle_list, float* density_buffer,
-	float3 cell_dims, float3 min_box_bound, int N, float h, float h2, float h_inv, float const_poly6, float mass, float p0) {
+	float3 cell_dims, float3 min_box_bound, int immovable_particle_num, float h, float h2, float h_inv, float const_poly6, float mass, float p0) {
 
 	int3 cell_idx = floor((pos - min_box_bound) * h_inv);
 	float density = 0;
@@ -52,7 +52,7 @@ __device__ float get_density(float3 pos, Particle* particles, int* cell_list, in
 					float3 diff = pos - particleB.pos;
 					float r2 = dot(diff, diff);
 
-					if (r2 < h2) {
+					if (r2 < h2 && neighbor_particle_idx > immovable_particle_num) {
 						density += mass * const_poly6 * powf(h2 - r2, 3);
 					}
 
@@ -64,12 +64,12 @@ __device__ float get_density(float3 pos, Particle* particles, int* cell_list, in
 	}
 
 	// Density can't be lower than reference density to avoid negative pressure
-	density = fmaxf(p0, density);
+	//density = fmaxf(p0, density);
 	return density;
 }
 
 __global__ void fill_grid(CudaGrid grid, Particle* particles, int N, int* cell_list, int* particle_list, float* density_buffer,
-	float3 cell_dims, float3 min_box_bound, int numParticles, float h, float h2, float h_inv, float const_poly6, float mass, float p0) {
+	float3 cell_dims, float3 min_box_bound, int immovable_particle_num, float h, float h2, float h_inv, float const_poly6, float mass, float p0) {
 	int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
 	if (tid < N) {
 		// (idx.z * gridSize.y + idx.y) * gridSize.x + idx.x
@@ -79,8 +79,13 @@ __global__ void fill_grid(CudaGrid grid, Particle* particles, int N, int* cell_l
 		uint3 gridPos = make_uint3(x, y, z);
 		float3 fpos = make_float3(x, y, z);
 		float3 pos = min_box_bound + fpos * grid.voxelSpacing;
-		//grid(gridPos).value = get_density(pos, particles, cell_list, particle_list, density_buffer, cell_dims, min_box_bound, numParticles, h, h2, h_inv, const_poly6, mass, p0);
-		float density = get_density(pos, particles, cell_list, particle_list, density_buffer, cell_dims, min_box_bound, numParticles, h, h2, h_inv, const_poly6, mass, p0);
+		float density;
+		float b = 1;
+		if (x <= b || y <= b || z <= b || x >= grid.gridSize.x-b-1 || y >= grid.gridSize.y-b-1 || z >= grid.gridSize.z-b-1) {
+			density = 0;
+		} else {
+			density = get_density(pos, particles, cell_list, particle_list, density_buffer, cell_dims, min_box_bound, immovable_particle_num, h, h2, h_inv, const_poly6, mass, p0);
+		}
 		grid(gridPos).value = density;
 	}
 }
@@ -99,7 +104,6 @@ __global__ void update_grid_normals(CudaGrid grid, Particle* particles, int N, i
 		uint3 gridPos = make_uint3(x, y, z);
 		float3 fpos = make_float3(x, y, z);
 		float3 pos = min_box_bound + fpos * grid.voxelSpacing;
-		//grid(gridPos).value = get_density(pos, particles, cell_list, particle_list, density_buffer, cell_dims, min_box_bound, numParticles, h, h2, h_inv, const_poly6, mass, p0);
 		float normalX = grid(gridPos).value - grid(gridPos.x + 1, gridPos.y, gridPos.z).value;
         float normalY = grid(gridPos).value - grid(gridPos.x, gridPos.y + 1, gridPos.z).value;
         float normalZ = grid(gridPos).value - grid(gridPos.x, gridPos.y, gridPos.z + 1).value;

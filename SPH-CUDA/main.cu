@@ -69,7 +69,7 @@ int main() {
 	float3 voxelSpacing = box / 128;
 	const uint3 gridSize = make_uint3(128);
 	const unsigned int maxNumTriangles = 10000000;
-	const float isoValue = 1.42f;
+	const float isoValue = 0.1;
 
 	std::cout << "Generating sphere ... ";
 	CudaGrid grid = CudaGrid::Sphere(gridSize, voxelSpacing);
@@ -162,48 +162,51 @@ int main() {
 
 			/* Visualization update */
 			float* vertexPointer;
-			// Map the buffer to CUDA
-			checkError(cudaGraphicsMapResources(1, &positionsVBO_CUDA));
 			size_t numBytes;
-			checkError(cudaGraphicsResourceGetMappedPointer((void**)&vertexPointer, &numBytes, positionsVBO_CUDA));
-			// Run kernel
-			copy_particle_positions << <params.thread_groups_part, params.threads_per_group >> > ((float*)vertexPointer, d_particles, total_particle_num, params.immovable_particle_num);
-			// Unmap the buffer
-			checkError(cudaGraphicsUnmapResources(1, &positionsVBO_CUDA));
 
-			//vis.draw(params.draw_number);
+			if (vis.marchingCubes) {
+				/* Marching Cubes */
+				// update grid
+				int gridSizeN = gridSize.x * gridSize.y * gridSize.z;
+				fill_grid<<<gridSizeN, params.threads_per_group>>> (grid, d_particles, gridSizeN, d_cell_list, d_particle_list, d_density_buffer,
+					params.cell_dims, params.min_box_bound, params.immovable_particle_num, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
+				checkError(cudaPeekAtLastError());
+				checkError(cudaDeviceSynchronize());
+				update_grid_normals<<<gridSizeN, params.threads_per_group>>> (grid, d_particles, gridSizeN, d_cell_list, d_particle_list, d_density_buffer,
+					params.cell_dims, params.min_box_bound, params.draw_number, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
+				checkError(cudaPeekAtLastError());
+				checkError(cudaDeviceSynchronize());
 
-			/* Marching Cubes */
-			// update grid
-			int gridSizeN = gridSize.x * gridSize.y * gridSize.z;
-			fill_grid<<<gridSizeN, params.threads_per_group>>> (grid, d_particles, gridSizeN, d_cell_list, d_particle_list, d_density_buffer,
-				params.cell_dims, params.min_box_bound, params.draw_number, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
-			checkError(cudaPeekAtLastError());
-			checkError(cudaDeviceSynchronize());
-			update_grid_normals<<<gridSizeN, params.threads_per_group>>> (grid, d_particles, gridSizeN, d_cell_list, d_particle_list, d_density_buffer,
-				params.cell_dims, params.min_box_bound, params.draw_number, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
-			checkError(cudaPeekAtLastError());
-			checkError(cudaDeviceSynchronize());
+				// reset
+				unsigned int numTriangles = 0;
+				cudaMemset(marchingCubes.marchingCubesData.d_numTriangles, 0, sizeof(unsigned int));
+				marchingCubes.extractTrianglesGPU(grid, isoValue);
+				checkError(cudaMemcpy(&numTriangles, marchingCubes.marchingCubesData.d_numTriangles, sizeof(int), cudaMemcpyDeviceToHost));
+				
+				std::cout << "numTriangles: " << numTriangles << std::endl;
 
-			// reset
-			unsigned int numTriangles = 0;
-			cudaMemset(marchingCubes.marchingCubesData.d_numTriangles, 0, sizeof(unsigned int));
-			marchingCubes.extractTrianglesGPU(grid, isoValue);
-			checkError(cudaMemcpy(&numTriangles, marchingCubes.marchingCubesData.d_numTriangles, sizeof(int), cudaMemcpyDeviceToHost));
-			
-			std::cout << "numTriangles: " << numTriangles << std::endl;
+				// Map the buffer to CUDA
+				checkError(cudaGraphicsMapResources(1, &trianlgesVBO_CUDA));
+				checkError(cudaGraphicsResourceGetMappedPointer((void **)&vertexPointer, &numBytes, trianlgesVBO_CUDA));
+				// Run kernel
+				copy_triangles<<<3 * numTriangles, params.threads_per_group>>>((float*)vertexPointer, (float3*)marchingCubes.marchingCubesData.d_triangles, 3 * numTriangles, params.min_box_bound, grid);
+				checkError(cudaPeekAtLastError());
+				checkError(cudaDeviceSynchronize());
+				// Unmap the buffer
+				checkError(cudaGraphicsUnmapResources(1, &trianlgesVBO_CUDA));
 
-			// Map the buffer to CUDA
-			checkError(cudaGraphicsMapResources(1, &trianlgesVBO_CUDA));
-			checkError(cudaGraphicsResourceGetMappedPointer((void **)&vertexPointer, &numBytes, trianlgesVBO_CUDA));
-			// Run kernel
-			copy_triangles<<<3 * numTriangles, params.threads_per_group>>>((float*)vertexPointer, (float3*)marchingCubes.marchingCubesData.d_triangles, 3 * numTriangles, params.min_box_bound, grid);
-			checkError(cudaPeekAtLastError());
-			checkError(cudaDeviceSynchronize());
-			// Unmap the buffer
-			checkError(cudaGraphicsUnmapResources(1, &trianlgesVBO_CUDA));
+				vis.drawTriangles(numTriangles*3);
+			} else {
+				// Map the buffer to CUDA
+				checkError(cudaGraphicsMapResources(1, &positionsVBO_CUDA));
+				checkError(cudaGraphicsResourceGetMappedPointer((void**)&vertexPointer, &numBytes, positionsVBO_CUDA));
+				// Run kernel
+				copy_particle_positions << <params.thread_groups_part, params.threads_per_group >> > ((float*)vertexPointer, d_particles, total_particle_num, params.immovable_particle_num);
+				// Unmap the buffer
+				checkError(cudaGraphicsUnmapResources(1, &positionsVBO_CUDA));
 
-			vis.drawTriangles(numTriangles*3);
+				vis.draw(params.draw_number);
+			}
 
 			// Stop time measurement
 			end = std::chrono::steady_clock::now();
