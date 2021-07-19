@@ -208,7 +208,7 @@ Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float m
     int screenheight = return_struct[videoModeCount-1].height;
     int screenwidth = return_struct[videoModeCount-1].width;
     //std::cout << screenwidth << " " << screenheight << std::endl;
-    window = glfwCreateWindow(1024, 780, "Hello World", NULL, NULL);          // window
+    window = glfwCreateWindow(1600, 900, "Hello World", NULL, NULL);          // window
     //GLFWwindow* window = glfwCreateWindow(screenwidth, screenheight, "Hello World", monitor, nullptr);   // fullscreen with max resolution
     //window = glfwCreateWindow(1600, 900, "Hello World", glfwGetPrimaryMonitor(), nullptr);   // fullscreen with min res
     if (window == nullptr) { // !window
@@ -381,7 +381,7 @@ void Visualizer::draw(int objectNum) {
     GLTtext *text1 = gltCreateText();
     GLTtext *text2 = gltCreateText();
     GLTtext *text3 = gltCreateText();
-    gltSetText(text1, "Hello World!");
+    gltSetText(text1, "Controls: ESC, WASD, Q(Up), E(Down), Arrows(View), SPACE(Switch marching cubes)");
     char str[200];
 
     static float swapTime = 0;
@@ -504,7 +504,7 @@ void Visualizer::drawTriangles(int numTriangles) {
     GLTtext *text1 = gltCreateText();
     GLTtext *text2 = gltCreateText();
     GLTtext *text3 = gltCreateText();
-    gltSetText(text1, "Hello World!");
+    gltSetText(text1, "Controls: ESC, WASD, Q(Up), E(Down), Arrows(View), SPACE(Switch particle view)");
     char str[200];
 
     static float swapTime = 0;
