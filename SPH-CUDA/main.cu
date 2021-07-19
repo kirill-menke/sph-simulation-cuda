@@ -12,7 +12,13 @@
 
 #include "visualizer.h"
 #include "particlePositionCopy.cu"
+#include "triangleBufferCopy.cu"
 #include <cuda_gl_interop.h>
+
+#include "src/MarchingCubes/CudaGrid.h"
+#include "src/MarchingCubes/MarchingCubes.h"
+#include "src/MarchingCubes/CudaGrid.cu"
+#include "src/MarchingCubes/skel/MarchingCubes.cu"
 
 void initializeWallParticles(std::vector<Particle>&, Parameters&);
 void initializeParticles(std::vector<Particle>&, Parameters&);
@@ -58,13 +64,29 @@ int main() {
 	checkError(cudaMemcpy(d_cell_list, cell_list.data(), bytes_cell_list, cudaMemcpyHostToDevice));
 	checkError(cudaMemcpy(d_density_buffer, densities.data(), bytes_vec, cudaMemcpyHostToDevice));
 
+	/* Marching Cubes init */
+	float3 box = params.max_box_bound - params.min_box_bound;
+	float3 voxelSpacing = box / 128;
+	const uint3 gridSize = make_uint3(128);
+	const unsigned int maxNumTriangles = 10000000;
+	const float isoValue = 1.42f;
+
+	std::cout << "Generating sphere ... ";
+	CudaGrid grid = CudaGrid::Sphere(gridSize, voxelSpacing);
+	std::cout << "done!" << std::endl;
+
+	MarchingCubes marchingCubes(maxNumTriangles);
+
 	/* Visualization init */
-	Visualizer vis(params.draw_number, params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
+	Visualizer vis(params.draw_number, maxNumTriangles, params.particle_radius, params.min_box_bound.x, params.min_box_bound.y, params.min_box_bound.z,
 		params.max_box_bound.x, params.max_box_bound.y, params.max_box_bound.z);
 
 	struct cudaGraphicsResource* positionsVBO_CUDA = NULL;
 	checkError(cudaGraphicsGLRegisterBuffer(&positionsVBO_CUDA, vis.vertexArray, cudaGraphicsMapFlagsWriteDiscard));
-	
+
+	struct cudaGraphicsResource* trianlgesVBO_CUDA = NULL;
+	checkError(cudaGraphicsGLRegisterBuffer(&trianlgesVBO_CUDA, vis.triangleArray, cudaGraphicsMapFlagsWriteDiscard));
+
 	if (params.integrator == Integrator::Leapfrog) {
 		/* Initialize cell list and particle list */
 		assign_to_cells << <params.thread_groups_part, params.threads_per_group >> > (d_particles, d_cell_list, d_particle_list,
@@ -149,7 +171,39 @@ int main() {
 			// Unmap the buffer
 			checkError(cudaGraphicsUnmapResources(1, &positionsVBO_CUDA));
 
-			vis.draw(params.draw_number);
+			//vis.draw(params.draw_number);
+
+			/* Marching Cubes */
+			// update grid
+			int gridSizeN = gridSize.x * gridSize.y * gridSize.z;
+			fill_grid<<<gridSizeN, params.threads_per_group>>> (grid, d_particles, gridSizeN, d_cell_list, d_particle_list, d_density_buffer,
+				params.cell_dims, params.min_box_bound, params.draw_number, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
+			checkError(cudaPeekAtLastError());
+			checkError(cudaDeviceSynchronize());
+			update_grid_normals<<<gridSizeN, params.threads_per_group>>> (grid, d_particles, gridSizeN, d_cell_list, d_particle_list, d_density_buffer,
+				params.cell_dims, params.min_box_bound, params.draw_number, params.h, params.h2, params.h_inv, params.const_poly6, params.mass, params.p0);
+			checkError(cudaPeekAtLastError());
+			checkError(cudaDeviceSynchronize());
+
+			// reset
+			unsigned int numTriangles = 0;
+			cudaMemset(marchingCubes.marchingCubesData.d_numTriangles, 0, sizeof(unsigned int));
+			marchingCubes.extractTrianglesGPU(grid, isoValue);
+			checkError(cudaMemcpy(&numTriangles, marchingCubes.marchingCubesData.d_numTriangles, sizeof(int), cudaMemcpyDeviceToHost));
+			
+			std::cout << "numTriangles: " << numTriangles << std::endl;
+
+			// Map the buffer to CUDA
+			checkError(cudaGraphicsMapResources(1, &trianlgesVBO_CUDA));
+			checkError(cudaGraphicsResourceGetMappedPointer((void **)&vertexPointer, &numBytes, trianlgesVBO_CUDA));
+			// Run kernel
+			copy_triangles<<<3 * numTriangles, params.threads_per_group>>>((float*)vertexPointer, (float3*)marchingCubes.marchingCubesData.d_triangles, 3 * numTriangles, params.min_box_bound, grid);
+			checkError(cudaPeekAtLastError());
+			checkError(cudaDeviceSynchronize());
+			// Unmap the buffer
+			checkError(cudaGraphicsUnmapResources(1, &trianlgesVBO_CUDA));
+
+			vis.drawTriangles(numTriangles*3);
 
 			// Stop time measurement
 			end = std::chrono::steady_clock::now();
