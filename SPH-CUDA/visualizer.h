@@ -48,6 +48,7 @@ public:
     Shader* shader;
 
     static bool runSimulation;
+    static bool openDam;
     
     Sphere* sphere;
     Box* box;

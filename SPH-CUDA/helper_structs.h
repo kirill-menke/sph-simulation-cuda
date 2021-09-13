@@ -19,6 +19,7 @@ struct Parameters {
 
 	int movable_particle_num;
 	int immovable_particle_num;
+	int dam_particle_num;
 	float time_step;
 
 	/* Integration method */
@@ -112,9 +113,13 @@ struct Parameters {
 		/* Calculate number of particles per wall */
 		float3 box_dim = max_box_bound - min_box_bound;
 		particle_depth_per_dim = ceil(box_dim / boundary_spawn_dist);
-		// Calculate number of particles for five walls without ceiling
+		// Calculate number of particles for the five boundary walls (without ceiling)
 		immovable_particle_num = particle_depth_per_dim.x * particle_depth_per_dim.y * 2 + particle_depth_per_dim.z * particle_depth_per_dim.y * 2 + particle_depth_per_dim.z * particle_depth_per_dim.x;
-		
+		// Calculate number of particles for dam
+		dam_particle_num = particle_depth_per_dim.x * particle_depth_per_dim.y;
+		// Add to update total number of immovable particles
+		immovable_particle_num += dam_particle_num;
+
 		// Choose number of threads as maximum of immovable and moveable particles
 		int thread_count = max(immovable_particle_num, movable_particle_num);
 		thread_groups_part = int((thread_count + threads_per_group - 1) / threads_per_group);
@@ -122,7 +127,7 @@ struct Parameters {
 		#if defined(RENDERWALLS)
 			draw_number = immovable_particle_num + movable_particle_num;
 		#else
-			draw_number = movable_particle_num;
+			draw_number = movable_particle_num + dam_particle_num;
 		#endif
 	}
 };

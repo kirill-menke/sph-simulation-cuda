@@ -293,6 +293,7 @@ Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBo
 }
 
 bool Visualizer::runSimulation = true;
+bool Visualizer::openDam = false;
 
 void Visualizer::draw(int objectNum) {
     // Loop until the user closes the window 
@@ -424,6 +425,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
         Visualizer::runSimulation = !Visualizer::runSimulation;
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
+        Visualizer::openDam = true;
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly

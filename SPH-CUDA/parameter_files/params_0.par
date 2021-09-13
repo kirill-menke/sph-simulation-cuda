@@ -24,7 +24,7 @@ max_box_z				5.6
 threads_per_group		128
 
 spawn_dist				0.07
-boundary_spawn_dist		0.04
+boundary_spawn_dist		0.03
 spawn_off_x				0.0
 spawn_off_y				1.4
 spawn_off_z				0.0

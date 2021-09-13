@@ -95,7 +95,7 @@ int main() {
 			if (params.integrator == Integrator::Leapfrog) {
 				/* Integrate position and velocity */
 				leapfrog_pre_integration << <params.thread_groups_part, params.threads_per_group >> > (d_particles, d_force_buffer, params.mass_inv, params.time_step,
-					total_particle_num, params.immovable_particle_num, params.min_box_bound, params.max_box_bound, params.damping);
+					total_particle_num, params.immovable_particle_num, params.dam_particle_num, params.min_box_bound, params.max_box_bound, params.damping);
 			}
 
 			/* Set all entries of cell list to -1 */
@@ -121,15 +121,22 @@ int main() {
 			checkError(cudaPeekAtLastError());
 			checkError(cudaDeviceSynchronize());
 
+			/* Set forces of dam particles */
+			if (vis.openDam) {
+				set_dam_force << < params.thread_groups_part, params.threads_per_group >>> (d_particles, d_force_buffer, total_particle_num, params.immovable_particle_num, params.dam_particle_num);
+				checkError(cudaPeekAtLastError());
+				checkError(cudaDeviceSynchronize());
+			}
+
 			if (params.integrator == Integrator::Leapfrog) {
 				/* Integrate new positions and velocities */
 				leapfrog_post_integration << <params.thread_groups_part, params.threads_per_group >> >
-					(d_particles, d_force_buffer, params.mass_inv, params.time_step, total_particle_num, params.immovable_particle_num, params.min_box_bound, params.max_box_bound, params.damping);
+					(d_particles, d_force_buffer, params.mass_inv, params.time_step, total_particle_num, params.immovable_particle_num, params.dam_particle_num, params.min_box_bound, params.max_box_bound, params.damping);
 			}
 			else {
 				/* Integrate new positions and velocities */
 				integrate_symplectic_euler << <params.thread_groups_part, params.threads_per_group >> >
-					(d_particles, d_force_buffer, params.time_step, total_particle_num, params.immovable_particle_num, params.min_box_bound, params.max_box_bound, params.damping);
+					(d_particles, d_force_buffer, params.time_step, total_particle_num, params.immovable_particle_num, params.dam_particle_num, params.min_box_bound, params.max_box_bound, params.damping);
 				checkError(cudaPeekAtLastError());
 				checkError(cudaDeviceSynchronize());
 			}
@@ -145,7 +152,7 @@ int main() {
 			size_t numBytes;
 			checkError(cudaGraphicsResourceGetMappedPointer((void**)&vertexPointer, &numBytes, positionsVBO_CUDA));
 			// Run kernel
-			copy_particle_positions << <params.thread_groups_part, params.threads_per_group >> > ((float*)vertexPointer, d_particles, total_particle_num, params.immovable_particle_num);
+			copy_particle_positions << <params.thread_groups_part, params.threads_per_group >> > ((float*)vertexPointer, d_particles, total_particle_num, params.immovable_particle_num, params.dam_particle_num);
 			// Unmap the buffer
 			checkError(cudaGraphicsUnmapResources(1, &positionsVBO_CUDA));
 
@@ -170,7 +177,7 @@ int main() {
 	vis.end();
 }
 
-/* Determines position of wall particles, should be called before initilizing moveable particles */
+/* Determines position of wall particles, should be called before initializing moveable particles */
 void initializeWallParticles(std::vector<Particle>& particles, Parameters& p) {
 	// Calculate shift in order to spawn the cubic shape in the center of the box
 	// Shift equals half of the length of the cubic shape
@@ -201,6 +208,11 @@ void initializeWallParticles(std::vector<Particle>& particles, Parameters& p) {
 
 	// boundary in "false" x left
 	offset = make_float3(p.min_box_bound.x + shift, p.min_box_bound.y + shift, p.min_box_bound.z + shift);
+	limit = p.particle_depth_per_dim.x * p.particle_depth_per_dim.y;
+	placeWallParticles(particles, p, limit, offset, make_int3(0, 1, 2));
+
+	// dam in "false" x right
+	offset = make_float3(p.min_box_bound.x + shift, p.min_box_bound.y + shift, (p.min_box_bound.z + p.max_box_bound.z) / 2);
 	limit = p.particle_depth_per_dim.x * p.particle_depth_per_dim.y;
 	placeWallParticles(particles, p, limit, offset, make_int3(0, 1, 2));
 

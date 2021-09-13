@@ -6,6 +6,15 @@
 
 #include "cell_structure.cuh"
 
+__global__ void set_dam_force(Particle* particle, float3* force_buffer, int N, int immovable_particle_num, int dam_particle_num) {
+	int tid = (blockIdx.x * blockDim.x) + threadIdx.x + immovable_particle_num - dam_particle_num;
+
+	float3 up_force = make_float3(0, 20, 0);
+	if (tid >= immovable_particle_num - dam_particle_num && tid < immovable_particle_num) {
+		force_buffer[tid] = up_force;
+	}
+}
+
 __global__ void
 calculate_force(Particle* particles, int* cell_list, int* particle_list, float3* force_buffer, float* density_buffer, float3 cell_dims, float3 min_box_bound, 
 	int N, int immovable_particle_num, float h, float h_inv, float const_spiky, float const_visc, float const_surf, const float mass, float k, float e, float p0, float s, float3 g) {
