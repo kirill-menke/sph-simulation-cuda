@@ -35,11 +35,13 @@
 
 class Visualizer {
 public:
-    Visualizer(int objectNum,float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ);
+    Visualizer(int objectNum, int maxNumTriangles, float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ);
     void draw(int objectNum);
+    void drawTriangles(int numTriangles);
     void end();
 
     GLuint vertexArray;
+    GLuint triangleArray;
     
     GLFWwindow* window;
 
@@ -48,6 +50,7 @@ public:
     Shader* shader;
 
     static bool runSimulation;
+    static bool marchingCubes;
     static bool openDam;
     
     Sphere* sphere;

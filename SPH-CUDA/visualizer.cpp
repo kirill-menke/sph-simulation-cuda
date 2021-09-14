@@ -165,7 +165,7 @@ bool inFOV(float x, float y) {
     return abs(getAngle2(-denormalizeRadians(glm::radians(camera.Yaw-90)), x-getCamPos().x, y-getCamPos().y)) <= (getFOVrad()/2.0 + glm::radians(10.0));
 }
 
-Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
+Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
     // DEBUG
     #ifdef DEBUG
         glfwSetErrorCallback(error_callback);
@@ -208,7 +208,7 @@ Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBo
     int screenheight = return_struct[videoModeCount-1].height;
     int screenwidth = return_struct[videoModeCount-1].width;
     //std::cout << screenwidth << " " << screenheight << std::endl;
-    window = glfwCreateWindow(1024, 780, "Hello World", NULL, NULL);          // window
+    window = glfwCreateWindow(1600, 900, "Hello World", NULL, NULL);          // window
     //GLFWwindow* window = glfwCreateWindow(screenwidth, screenheight, "Hello World", monitor, nullptr);   // fullscreen with max resolution
     //window = glfwCreateWindow(1600, 900, "Hello World", glfwGetPrimaryMonitor(), nullptr);   // fullscreen with min res
     if (window == nullptr) { // !window
@@ -244,7 +244,7 @@ Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBo
     glfwSwapInterval(0);
 
     // face culling
-    ENABLE_FACE_CULLING = false;
+    ENABLE_FACE_CULLING = true;
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT); // default back
     //glFrontFace(GL_CCW); // default counter-clock-wise
@@ -283,6 +283,10 @@ Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBo
     glBindBuffer(GL_ARRAY_BUFFER, vertexArray);
     glBufferData(GL_ARRAY_BUFFER, objectNum*3*sizeof(float), NULL, GL_DYNAMIC_COPY);
 
+    glGenBuffers(1, &triangleArray);
+    glBindBuffer(GL_ARRAY_BUFFER, triangleArray);
+    glBufferData(GL_ARRAY_BUFFER, maxNumTriangles*9*sizeof(float), NULL, GL_DYNAMIC_COPY);
+
     renderer = new Renderer();
     // Shader stuff
     shader = new Shader("src/Shaders/shader");
@@ -293,6 +297,7 @@ Visualizer::Visualizer(int objectNum, float radius, float minBoundX, float minBo
 }
 
 bool Visualizer::runSimulation = true;
+bool Visualizer::marchingCubes = true;
 bool Visualizer::openDam = false;
 
 void Visualizer::draw(int objectNum) {
@@ -329,8 +334,8 @@ void Visualizer::draw(int objectNum) {
     shader->setMat4("model", model);
 
     //global light source can be either positional => perspecitve OR directional => orthographic
-    glm::vec3 lightPos = glm::vec3(50.0f, 50.0f, 500.0f);
-    glm::vec3 lightDir = glm::normalize(glm::vec3(1, 0.5, -1));
+    glm::vec3 lightPos = glm::vec3(50.0f, 500.0f, 50.0f);
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-1, 1, -0.5));
     bool perspectiveLight = false;
     if (perspectiveLight) {
         lightDir = getCamPos() - lightPos;
@@ -361,22 +366,146 @@ void Visualizer::draw(int objectNum) {
     ibo->bind();
     glDrawElementsInstanced(GL_TRIANGLES, ibo->getCount(), GL_UNSIGNED_INT, (void*)0, objectNum);
 
+    if (ENABLE_FACE_CULLING) {
+        glDisable(GL_CULL_FACE);
+    }
+
     // draw box
     shader->setFloat("alpha", 0.2f);
     box->bind();
     box->draw(renderer);
     shader->setFloat("alpha", 1.0f);
 
-    if (ENABLE_FACE_CULLING) {
-        glDisable(GL_CULL_FACE);
-    }
     float time1 = glfwGetTime();
     float drawTime = (time1-time0)*1000;
 
     GLTtext *text1 = gltCreateText();
     GLTtext *text2 = gltCreateText();
     GLTtext *text3 = gltCreateText();
-    gltSetText(text1, "Hello World!");
+    gltSetText(text1, "Controls: ESC, WASD, Q(Up), E(Down), Arrows(View), SPACE(Switch marching cubes)");
+    char str[200];
+
+    static float swapTime = 0;
+    static float swapTimeonly = 0;
+    std::string printString = "compute: " + std::to_string(compTime) + " draw: " + std::to_string(drawTime) + " swap: " + std::to_string(swapTime) 
+        + " swaponly: " + std::to_string(swapTimeonly);
+    gltSetText(text3, printString.c_str());
+
+    // HUD text
+    gltBeginDraw();
+    gltColor(1.0f, 1.0f, 1.0f, 0.5f);
+    gltDrawText2D(text3, 0.0, 30.0, 2.0);
+    gltDrawText2D(text1, 0.0f, 0.0f, 2.0f); // x=0.0, y=0.0, scale=1.0
+    snprintf(str, 200, "Frame Time: %.4f FPS: %.4f camAngle: %f, %f fov: %f", (deltaTime)*1000.0, 1.0/(deltaTime), camera.Yaw, camera.Pitch, glm::degrees(getFOVrad()));
+    gltSetText(text2, str);
+    gltDrawText2DAligned(text2, 0.0f, (GLfloat)viewportHeight, 2.0f, GLT_LEFT, GLT_BOTTOM);
+    gltEndDraw();
+
+    gltDeleteText(text1);
+    gltDeleteText(text2);
+    gltDeleteText(text3);
+
+    // swap and poll
+    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+    float swapTime0 = glfwGetTime();
+    glfwSwapBuffers(window); // Swap front and back buffers
+    float swapTime1 = glfwGetTime();
+    swapTimeonly = (swapTime1-swapTime0)*1000;
+    glfwPollEvents(); // Poll for and process events
+    float time2 = glfwGetTime();
+    swapTime = (time2-time1)*1000;
+}
+
+void Visualizer::drawTriangles(int numTriangles) {
+    // Loop until the user closes the window 
+    //while (!glfwWindowShouldClose(window)) {
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    processInput(window);
+
+    // clear
+    renderer->clear(0.3f, 0.4f, 0.4f, 1.0f);
+    // bind the right shader for drawing
+    shader->bind();
+
+    // draw
+    shader->setFloat("near", nearViewDistance);
+    shader->setFloat("far", farViewDistance);
+    shader->setVec3("camPos", getCamPos());
+    shader->setFloat("alpha", 1.0f);
+
+    // pass projection matrix to shader (note that in this case it could change every frame)
+    glm::mat4 projection = glm::perspective(getFOVvertRad(), getAspectRatio(), nearViewDistance, farViewDistance); // fovy (vertical); last two params: min and max view range
+    shader->setMat4("projection", projection);
+    // camera/view transformation
+    glm::mat4 view = camera.GetViewMatrix();
+    shader->setMat4("view", view);
+    // calculate the model matrix for each object and pass it to shader before drawing
+    glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  0.0f)); // cube position
+    float angle = 0;//20.0f * i;
+    model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+    shader->setMat4("model", model);
+
+    //global light source can be either positional => perspecitve OR directional => orthographic
+    glm::vec3 lightPos = glm::vec3(50.0f, 500.0f, 50.0f);
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-1, 1, -0.5));
+    bool perspectiveLight = false;
+    if (perspectiveLight) {
+        lightDir = getCamPos() - lightPos;
+    } else { // orthographicLight
+        lightPos = getCamPos() + lightDir;
+    }
+    shader->setVec3("lightPos", lightPos);
+    shader->setVec3("lightDir", lightDir);
+
+    //get position
+    glm::vec3 worldCoord = getCamPos();
+
+    float time0 = glfwGetTime();
+    float compTime = (time0-currentFrame)*1000;
+    if (ENABLE_FACE_CULLING) {
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+    }
+
+    // draw spheres
+    //sphere->bind();
+    VertexBuffer* vbo = new VertexBuffer(triangleArray);
+    VertexArrayObject* vao = new VertexArrayObject(numTriangles);
+    //ibo = new IndexBuffer(indices.data(), indices.size());
+    AttributeBufferLayout *abl = new AttributeBufferLayout(
+        {
+        {GL_FLOAT, 3},
+        {GL_FLOAT, 3},
+        {GL_FLOAT, 3}
+        },
+        *vbo
+    );
+    vao->addABL(*abl);
+    vbo->bind();
+    vao->bind();
+    renderer->draw(GL_TRIANGLES, *vao, nullptr, 0, 0);
+
+    if (ENABLE_FACE_CULLING) {
+        glDisable(GL_CULL_FACE);
+    }
+
+    // draw box
+    shader->setFloat("alpha", 0.2f);
+    box->bind();
+    box->draw(renderer);
+    shader->setFloat("alpha", 1.0f);
+
+    float time1 = glfwGetTime();
+    float drawTime = (time1-time0)*1000;
+
+    GLTtext *text1 = gltCreateText();
+    GLTtext *text2 = gltCreateText();
+    GLTtext *text3 = gltCreateText();
+    gltSetText(text1, "Controls: ESC, WASD, Q(Up), E(Down), Arrows(View), SPACE(Switch particle view)");
     char str[200];
 
     static float swapTime = 0;
@@ -424,7 +553,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-        Visualizer::runSimulation = !Visualizer::runSimulation;
+        Visualizer::marchingCubes = !Visualizer::marchingCubes;
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
         Visualizer::openDam = true;
 }

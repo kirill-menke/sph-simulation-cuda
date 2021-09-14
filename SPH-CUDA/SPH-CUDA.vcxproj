@@ -142,7 +142,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\dependencies\glew-2.1.0-win32\glew-2.1.0\include;..\dependencies\glfw-3.3.4.bin.WIN64\include;..\dependencies\glm-0.9.9.8\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\dependencies\glew-2.1.0-win32\glew-2.1.0\include;..\dependencies\glfw-3.3.4.bin.WIN64\include;..\dependencies\glm-0.9.9.8\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.3\include;C:\Users\linda\Documents\HESP\SPH-Simulation-CUDA\SPH-CUDA\src\MarchingCubes</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -177,6 +177,7 @@
     <ClInclude Include="libs\camera.h" />
     <ClInclude Include="libs\gltext.h" />
     <ClInclude Include="src\box.h" />
+    <ClInclude Include="src\MarchingCubes\CudaGrid.h" />
     <ClInclude Include="src\Renderer\AttributeBufferLayout.h" />
     <ClInclude Include="src\Renderer\IndexBuffer.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
@@ -191,6 +192,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\box.cpp" />
+    <ClCompile Include="src\MarchingCubes\CudaGrid.cpp" />
+    <ClCompile Include="src\MarchingCubes\skel\MarchingCubes.cpp" />
     <ClCompile Include="src\Renderer\AttributeBufferLayout.cpp" />
     <ClCompile Include="src\Renderer\IndexBuffer.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />

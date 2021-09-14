@@ -98,6 +98,9 @@
     <ClInclude Include="libs\gltext.h">
       <Filter>opengl</Filter>
     </ClInclude>
+    <ClInclude Include="src\MarchingCubes\CudaGrid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="main.cu">
@@ -131,6 +134,12 @@
     </ClCompile>
     <ClCompile Include="visualizer.cpp">
       <Filter>opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarchingCubes\CudaGrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MarchingCubes\skel\MarchingCubes.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
