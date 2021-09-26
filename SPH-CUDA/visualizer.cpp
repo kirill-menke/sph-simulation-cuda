@@ -165,7 +165,8 @@ bool inFOV(float x, float y) {
     return abs(getAngle2(-denormalizeRadians(glm::radians(camera.Yaw-90)), x-getCamPos().x, y-getCamPos().y)) <= (getFOVrad()/2.0 + glm::radians(10.0));
 }
 
-Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ) {
+Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float minBoundX, float minBoundY, float minBoundZ, float maxBoundX, float maxBoundY, float maxBoundZ)
+        : radius(radius), minBoundX(minBoundX), minBoundY(minBoundY), minBoundZ(minBoundZ), maxBoundX(maxBoundX), maxBoundY(maxBoundY), maxBoundZ(maxBoundZ) {
     // DEBUG
     #ifdef DEBUG
         glfwSetErrorCallback(error_callback);
@@ -371,6 +372,15 @@ void Visualizer::draw(int objectNum) {
     }
 
     // draw box
+    box_dam = new Box(glm::vec3(minBoundX + 2 * radius, dam_pos + minBoundY + 2 * radius, (minBoundZ + maxBoundZ)/2 - 2 * radius),
+        glm::vec3(maxBoundX - 2 * radius, dam_pos + maxBoundY - 2 * radius, (minBoundZ + maxBoundZ)/2 + 2 * radius));
+    if (openDam) {
+        dam_vel += dam_acc;
+        dam_pos += dam_vel;
+    }
+    shader->setFloat("alpha", 0.5f);
+    box_dam->bind();
+    box_dam->draw(renderer);
     shader->setFloat("alpha", 0.2f);
     box->bind();
     box->draw(renderer);
@@ -494,6 +504,16 @@ void Visualizer::drawTriangles(int numTriangles) {
     }
 
     // draw box
+    box_dam = new Box(glm::vec3(minBoundX + 2 * radius, dam_pos + minBoundY + 2 * radius, (minBoundZ + maxBoundZ)/2 - 2 * radius),
+        glm::vec3(maxBoundX - 2 * radius, dam_pos + maxBoundY - 2 * radius, (minBoundZ + maxBoundZ)/2 + 2 * radius));
+    if (openDam) {
+        dam_vel += dam_acc;
+        dam_pos += dam_vel;
+    }
+    shader->setFloat("alpha", 0.5f);
+    box_dam->bind();
+    box_dam->draw(renderer);
+    
     shader->setFloat("alpha", 0.2f);
     box->bind();
     box->draw(renderer);

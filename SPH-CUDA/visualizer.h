@@ -52,9 +52,15 @@ public:
     static bool runSimulation;
     static bool marchingCubes;
     static bool openDam;
+
+    float radius, minBoundX, minBoundY, minBoundZ, maxBoundX, maxBoundY, maxBoundZ;
+    float dam_pos = 0;
+    float dam_vel = 0;
+    float dam_acc = 0.0005;
     
     Sphere* sphere;
     Box* box;
+    Box* box_dam;
     bool ENABLE_FACE_CULLING;
 };
 
