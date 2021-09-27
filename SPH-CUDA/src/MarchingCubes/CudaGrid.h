@@ -2,7 +2,6 @@
 #include <vector_types.h>
 #include "vector_functions.h"
 #include "cutil_math.h"
-//#define SKELETON
 
 class CudaGrid {
 public:

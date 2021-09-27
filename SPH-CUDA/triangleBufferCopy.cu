@@ -18,8 +18,9 @@ __global__ void copy_triangles(float* vertexArray, float3* vertices, int N, floa
         vertexArray[tid*9 + 1] = vertices[tid].y + min_box_bound.y;
         vertexArray[tid*9 + 2] = vertices[tid].z + min_box_bound.z;
 
-		vertexArray[tid*9 + 3] = 0.5;
-        vertexArray[tid*9 + 4] = 0.5;
+		// rgb color
+		vertexArray[tid*9 + 3] = 0.2;
+        vertexArray[tid*9 + 4] = 0.2;
         vertexArray[tid*9 + 5] = 0.8;
 
         vertexArray[tid*9 + 6] = grid(idx).normal.x;

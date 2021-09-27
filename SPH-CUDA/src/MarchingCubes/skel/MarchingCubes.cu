@@ -12,9 +12,7 @@
 __device__ void MarchingCubes::MarchingCubesData::addTriangle(const Triangle &t) {
 	uint slot = 0;
 
-	// TODO get slot & increment tri counter
-	//...
-	
+	// get slot & increment tri counter	
 	slot = (uint) atomicAdd(d_numTriangles, 1);
 
 	if (slot >= maxNumTriangles) {
@@ -22,8 +20,7 @@ __device__ void MarchingCubes::MarchingCubesData::addTriangle(const Triangle &t)
 		return;
 	}
 
-	//TODO store t in slot
-	//...
+	// store t in slot
 	d_triangles[slot] = t;
 
 }
@@ -33,13 +30,11 @@ __device__ MarchingCubes::Vertex MarchingCubes::vertexInterp(float isolevel, con
 	MarchingCubes::Vertex r2; r2.position = p2;
 	float mu = -1.f;
 	float c = isolevel;
-	//TODO compute weight mu using c = (1 - mu) * d1 + mu * d2
-	//...
+	// compute weight mu using c = (1 - mu) * d1 + mu * d2
 	mu = (c - d1) / (d2 - d1);
 
 	MarchingCubes::Vertex res;
-	// TODO compute res.position
-	// ...
+	// compute res.position
 	res.position = lerp(r1.position, r2.position, mu);
 	return res;
 }
@@ -47,7 +42,6 @@ __device__ MarchingCubes::Vertex MarchingCubes::vertexInterp(float isolevel, con
 __global__ void extractTrianglesKernel(CudaGrid grid, float isoValue, MarchingCubes::MarchingCubesData data) {
 	const uint3 idx = (dim3)blockDim * blockIdx + threadIdx;
 	//only extract no boundary
-	
 	if (idx.x == 0 || idx.y == 0 || idx.z == 0) {
 		return;
 	}
@@ -84,9 +78,8 @@ __global__ void extractTrianglesKernel(CudaGrid grid, float isoValue, MarchingCu
 	
 
 	unsigned int cubeindex = 0;
-	//TODO compute cubeindex & voxel positions
-	//...
-	//cubeindex is an 8 bit index, set respective bit to generate cubeindex
+	// compute cubeindex & voxel positions
+	// cubeindex is an 8 bit index, set respective bit to generate cubeindex
 
 	if (dist0 < isoValue) {
 		cubeindex += 1;
@@ -115,9 +108,8 @@ __global__ void extractTrianglesKernel(CudaGrid grid, float isoValue, MarchingCu
 
 
 	MarchingCubes::Vertex vertlist[12];
-	//TODO generate vertexlist
-	//...
-	//edgeTable returns a 12 bit number, each bit corresponds to 1 of 12 edges
+	// generate vertexlist
+	// edgeTable returns a 12 bit number, each bit corresponds to 1 of 12 edges
 	if (edgeTable[cubeindex] & 1) {
 		vertlist[0] = MarchingCubes::vertexInterp(isoValue, pos0, pos1, dist0, dist1);
 	}
@@ -159,8 +151,7 @@ __global__ void extractTrianglesKernel(CudaGrid grid, float isoValue, MarchingCu
 	
 	for (int i = 0; triTable[cubeindex][i] != -1; i += 3) {
 		MarchingCubes::Triangle t;
-		//TODO compute tri
-		//...
+		// compute tri
 		t.v[0] = vertlist[triTable[cubeindex][i]];
 		t.v[1] = vertlist[triTable[cubeindex][i+1]];
 		t.v[2] = vertlist[triTable[cubeindex][i+2]];

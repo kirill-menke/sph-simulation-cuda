@@ -15,19 +15,16 @@ MarchingCubes::MarchingCubes(unsigned int maxNumTriangles) {
 std::vector<MarchingCubes::Triangle> MarchingCubes::extractTriangles(const CudaGrid &grid, float isoValue) {
 	unsigned int numTriangles = 0;
 
-	//TODO init marchingCubesData.d_numTriangles
-	//...
+	// init marchingCubesData.d_numTriangles
 	cudaMemset(marchingCubesData.d_numTriangles, 0, sizeof(unsigned int));
 
 	extractTrianglesGPU(grid, isoValue);
 
-	//TODO get num of extracted triangles
-	//...
+	// get num of extracted triangles
 	cutilSafeCall(cudaMemcpy(&numTriangles, marchingCubesData.d_numTriangles, sizeof(int), cudaMemcpyDeviceToHost));
 	std::vector<Triangle> triangles(numTriangles);
 
-	//TODO copy result to cpu
-	//...
+	// copy result to cpu
 	cutilSafeCall(cudaMemcpy(triangles.data(), marchingCubesData.d_triangles, numTriangles * sizeof(Triangle), cudaMemcpyDeviceToHost));
 
 	return triangles;

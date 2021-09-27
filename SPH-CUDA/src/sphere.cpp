@@ -14,8 +14,9 @@ Sphere::Sphere(float radius, int rings, int sectors) : radius(radius), rings(rin
         buffer[bufferInd++] = v.y;
         buffer[bufferInd++] = v.z;
 
-        buffer[bufferInd++] = 0.5;
-        buffer[bufferInd++] = 0.5;
+        // rgb color
+        buffer[bufferInd++] = 0.2;
+        buffer[bufferInd++] = 0.2;
         buffer[bufferInd++] = 0.8;
 
         buffer[bufferInd++] = -v.x;

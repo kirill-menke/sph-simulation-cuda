@@ -165,7 +165,7 @@ int main() {
 
 			// Stop time measurement
 			std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-			std::cout << "Time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+			//std::cout << "Time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
 
 			/* Visualization update */
 			float* vertexPointer;
@@ -190,7 +190,7 @@ int main() {
 				marchingCubes.extractTrianglesGPU(grid, isoValue);
 				checkError(cudaMemcpy(&numTriangles, marchingCubes.marchingCubesData.d_numTriangles, sizeof(int), cudaMemcpyDeviceToHost));
 				
-				std::cout << "numTriangles: " << numTriangles << std::endl;
+				//std::cout << "numTriangles: " << numTriangles << std::endl;
 
 				// Map the buffer to CUDA
 				checkError(cudaGraphicsMapResources(1, &trianlgesVBO_CUDA));
@@ -217,7 +217,7 @@ int main() {
 
 			// Stop time measurement
 			end = std::chrono::steady_clock::now();
-			std::cout << "Time2 = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+			//std::cout << "Time2 = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
 
 		}
 	}

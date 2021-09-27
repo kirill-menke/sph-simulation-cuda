@@ -235,11 +235,6 @@ Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float m
     // Transparency
     glEnable(GL_BLEND); // order doesnt matter
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    // TODO test
-    int test = glfwExtensionSupported("WGL_EXT_swap_control_tear");
-    int test0 = glfwExtensionSupported("GLX_EXT_swap_control_tear");
-    std::cout << "WGL_EXT_swap_control_tear support: " << test << " GLX_EXT_swap_control_tear: " << test0 << std::endl;
 
     // vsync
     glfwSwapInterval(0);
@@ -261,7 +256,7 @@ Visualizer::Visualizer(int objectNum, int maxNumTriangles, float radius, float m
     }
     
     // configure global opengl state
-    glEnable(GL_DEPTH_TEST); // TODO for 3d?
+    glEnable(GL_DEPTH_TEST);
     // MSAA
     //glEnable(GL_MULTISAMPLE); // Enabled by default on some drivers, but not all so always enable to make sure
     // both work on linux? only arb on windows?
@@ -391,20 +386,11 @@ void Visualizer::draw(int objectNum) {
 
     GLTtext *text1 = gltCreateText();
     GLTtext *text2 = gltCreateText();
-    GLTtext *text3 = gltCreateText();
-    gltSetText(text1, "Controls: ESC, WASD, Q(Up), E(Down), Arrows(View), SPACE(Switch marching cubes)");
     char str[200];
-
-    static float swapTime = 0;
-    static float swapTimeonly = 0;
-    std::string printString = "compute: " + std::to_string(compTime) + " draw: " + std::to_string(drawTime) + " swap: " + std::to_string(swapTime) 
-        + " swaponly: " + std::to_string(swapTimeonly);
-    gltSetText(text3, printString.c_str());
 
     // HUD text
     gltBeginDraw();
     gltColor(1.0f, 1.0f, 1.0f, 0.5f);
-    gltDrawText2D(text3, 0.0, 30.0, 2.0);
     gltDrawText2D(text1, 0.0f, 0.0f, 2.0f); // x=0.0, y=0.0, scale=1.0
     snprintf(str, 200, "Frame Time: %.4f FPS: %.4f camAngle: %f, %f fov: %f", (deltaTime)*1000.0, 1.0/(deltaTime), camera.Yaw, camera.Pitch, glm::degrees(getFOVrad()));
     gltSetText(text2, str);
@@ -413,17 +399,11 @@ void Visualizer::draw(int objectNum) {
 
     gltDeleteText(text1);
     gltDeleteText(text2);
-    gltDeleteText(text3);
 
     // swap and poll
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    float swapTime0 = glfwGetTime();
     glfwSwapBuffers(window); // Swap front and back buffers
-    float swapTime1 = glfwGetTime();
-    swapTimeonly = (swapTime1-swapTime0)*1000;
     glfwPollEvents(); // Poll for and process events
-    float time2 = glfwGetTime();
-    swapTime = (time2-time1)*1000;
 }
 
 void Visualizer::drawTriangles(int numTriangles) {
@@ -524,20 +504,12 @@ void Visualizer::drawTriangles(int numTriangles) {
 
     GLTtext *text1 = gltCreateText();
     GLTtext *text2 = gltCreateText();
-    GLTtext *text3 = gltCreateText();
     gltSetText(text1, "Controls: ESC, WASD, Q(Up), E(Down), Arrows(View), SPACE(Switch particle view)");
     char str[200];
-
-    static float swapTime = 0;
-    static float swapTimeonly = 0;
-    std::string printString = "compute: " + std::to_string(compTime) + " draw: " + std::to_string(drawTime) + " swap: " + std::to_string(swapTime) 
-        + " swaponly: " + std::to_string(swapTimeonly);
-    gltSetText(text3, printString.c_str());
 
     // HUD text
     gltBeginDraw();
     gltColor(1.0f, 1.0f, 1.0f, 0.5f);
-    gltDrawText2D(text3, 0.0, 30.0, 2.0);
     gltDrawText2D(text1, 0.0f, 0.0f, 2.0f); // x=0.0, y=0.0, scale=1.0
     snprintf(str, 200, "Frame Time: %.4f FPS: %.4f camAngle: %f, %f fov: %f", (deltaTime)*1000.0, 1.0/(deltaTime), camera.Yaw, camera.Pitch, glm::degrees(getFOVrad()));
     gltSetText(text2, str);
@@ -546,17 +518,11 @@ void Visualizer::drawTriangles(int numTriangles) {
 
     gltDeleteText(text1);
     gltDeleteText(text2);
-    gltDeleteText(text3);
 
     // swap and poll
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    float swapTime0 = glfwGetTime();
     glfwSwapBuffers(window); // Swap front and back buffers
-    float swapTime1 = glfwGetTime();
-    swapTimeonly = (swapTime1-swapTime0)*1000;
     glfwPollEvents(); // Poll for and process events
-    float time2 = glfwGetTime();
-    swapTime = (time2-time1)*1000;
 }
 
 void Visualizer::end() {

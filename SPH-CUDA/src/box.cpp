@@ -14,6 +14,7 @@ Box::Box(glm::vec3 min, glm::vec3 max) : min(min), max(max) {
         buffer[bufferInd++] = vertices[i].y;
         buffer[bufferInd++] = vertices[i].z;
 
+        // rgb color
         buffer[bufferInd++] = 0.4;
         buffer[bufferInd++] = 0.4;
         buffer[bufferInd++] = 0.7;
