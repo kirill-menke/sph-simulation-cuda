@@ -1,4 +1,4 @@
-movable_particle_num	27000
+movable_particle_num	50653
 timestep				0.005
 
 integrator				euler
