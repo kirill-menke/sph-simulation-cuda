@@ -7,7 +7,7 @@ We implemented a typical dambreak scenario which supports two rendering modes: R
 
 The video below shows a real-time simulation of about 50.000 particles on the GeForce GTX 1080 Ti achieving stable 70 FPS in particle rendering mode and 40 FPS in surface rendering mode.
 
-<img src="recordings/dambreak.gif" alt="dambreak_scenario" width="1000"/>
+<img src="visualization/dambreak.gif" alt="dambreak_scenario" width="1000"/>
 
 
 ## Implementation
