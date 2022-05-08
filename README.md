@@ -20,7 +20,7 @@ Hence, we utilized an uniform grid for the neighborhood search which divides the
 ### Simulation Pipeline
 The following pipeline summarizes the steps which were performed in every timestep to advect the particles forward in time. 
 Each of these steps was implemented in a separate CUDA kernel which is called from the main loop in [main.cu](SPH-CUDA/main.cu):
-<img src="visualization/simulation_pipeline.png" width="1000">
+![simulation_pipeline](visualization/test.png)
 
 1. **[Insert Particles](SPH-CUDA/cell_structure.cuh)**
 
@@ -58,7 +58,7 @@ Each of these steps was implemented in a separate CUDA kernel which is called fr
 The boundaries of the transparent box seen in the video above were sampled with particles that were excluded from the rendering. The integration step was skipped for these boundary particles, i.e. they were frozen over the entire simulation.
 However, they were assigned a constant density value in the beginning so they could exert pressure on the inner particles as they would approach the boundary and push them inwards again. 
 
-## Usage
+## Parameters
 Before starting the application, the following simulation parameters can be set in [SPH-CUDA/parameter-files/parameters.par](SPH-CUDA/parameter_files/parameters.par):
 
 | Parameter        | Description           |
@@ -79,13 +79,13 @@ Before starting the application, the following simulation parameters can be set 
 | *spawn_off_{axis}* | Initial spawn location of particles       |
 | *particle_radius* | Rendering size of particles       |
 
-
+## Features
 Starting the application, the particles will spawn in a cube-shaped form at the position specified in the parameters file.
 The camera view can be moved using `W`, `A`, `S`, `D` buttons. 
 It is possible to switch between the two available rendering modes during runtime using the `space` key.
 The dam seperating the simulation domain in two parts can be lifted by pressing the `enter` key.
 
-## Prerequisites and Build
+## Dependencies and Build
 This project was developed and tested with CUDA Toolkit 11.6 and the Visual Studio 2019 compiler.
 All dependencies related to OpenGL are included within this repository and can be found in the `dependencies/` folder.
 To compile this project, you can open the solution file SPH-CUDA.sln within Visual Studio.
