@@ -19,27 +19,27 @@ Here, a naive algorithm that checks every other particle if it lies within this 
 Hence, we utilized an uniform grid for the neighborhood search which divides the simulation domain into equally-sized cells. In this way, only neighboring cells need to be checked for potential neighbors, reducing the runtime to O(n).
 ### Simulation Pipeline
 The following pipeline summarizes the steps which were performed in every timestep to advect the particles forward in time. 
-Each of these steps was implemented in a separate CUDA kernel which is called from the main loop in [main.cu](SPH-CUDA/main.cu).
-![simulation_pipeline](visualization/simulation_pipeline.png)
+Each of these steps was implemented in a separate CUDA kernel which is called from the main loop in [main.cu](SPH-CUDA/main.cu):
+<img src="visualization/simulation_pipeline.png" width="1000">
 
-1. ***[Insert Particles](SPH-CUDA/cell_structure.cuh)***
+1. **[Insert Particles](SPH-CUDA/cell_structure.cuh)**
 
     Particles are inserted into the uniform grid, i.e. each particle is assigned to one cell. Each cell has the size of the smoothing radius used for SPH.
 
-2. ***[Compute Pressures](SPH-CUDA/calculate_density.cuh)***
+2. **[Compute Pressures](SPH-CUDA/calculate_density.cuh)**
    
     Based on the grid, the density at every particles location is calculated. To do this, we simply iterate over each particle and look in its neighbouring cells for other particles that lie within the smoothing radius. Those who do, are included into the density calculation, i.e. only particles within this smoothin radius have influence on the current density. Using the density, we can then calculate the pressure required for the pressure force.
 
     ![density_formula](visualization/density.png) &nbsp;&nbsp;&nbsp;&nbsp; ![pressure_formula](visualization/pressure_calculation.png)
 
-3. ***[Compute Forces](SPH-CUDA/calculate_forces.cuh)***
+3. **[Compute Forces](SPH-CUDA/calculate_forces.cuh)**
 
     We use the densities and pressures from the previous step to calculate the forces acting on every particle. This is the pressure force on the one hand and the viscosity force on the other.
     Again, we mus iterate over all particles and include all neighboring particles in the force calculation that lie within the smoothing radius.
 
     ![pressure_formula](visualization/pressure_force.png) &nbsp;&nbsp;&nbsp;&nbsp; ![viscosity_formula](visualization/viscosity_force.png)
 
-4. ***[Integration](SPH-CUDA/integrators.cuh)***
+4. **[Integration](SPH-CUDA/integrators.cuh)**
    
     In the last step the position and the velocity can be calculated from the force. As integration method we first used Forward Euler but this was unstable and made our simulation explode. So we decided to go for Symplectic Euler which conserves the energy exactly. That means particles don’t slow down or accelerate without reason. In Symplectic Euler, the velocity is updated first and then used to update our current position.
 
@@ -47,7 +47,7 @@ Each of these steps was implemented in a separate CUDA kernel which is called fr
    
     We also experimented with the Leapfrog integrator. This is a second-order integrator which requires more computational effort but in return gives a higher accuracy. However, there was no visible difference compared to Symplectic Euler.
 
-5. Rendering
+5. **Rendering**
     
     Finally, we render the particles new position. This was done with OpenGL. More precisely, we used CUDA's OpenGL interoperability to directly access the particle data on GPU with OpenGL. 
     The individual particles can be either displayed as spheres or a surface can be drawn using the Marching Cubes algorithm.
@@ -62,7 +62,7 @@ However, they were assigned a constant density value in the beginning so they co
 Before starting the application, the following simulation parameters can be set in [SPH-CUDA/parameter-files/parameters.par](SPH-CUDA/parameter_files/parameters.par):
 
 | Parameter        | Description           |
-| ------------- |:-------------|
+|:------------- |:-------------|
 | *movable_particle_num* &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| Amount of simulation particles (Excluding particles used for boundary sampling) |
 | *timestep*      | Timestep used during integration      |
 | *h* | SPH smoothing radius      |
