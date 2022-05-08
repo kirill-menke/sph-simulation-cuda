@@ -21,7 +21,8 @@ Hence, we utilized an uniform grid for the neighborhood search which divides the
 The following pipeline summarizes the steps which were performed in every timestep to advect the particles forward in time. 
 Each of these steps was implemented in a separate CUDA kernel and is called within the main loop in [main.cu](SPH-CUDA/main.cu):
 
-![simulation_pipeline](visualization/test.png)
+![simulation_pipeline](visualization/simulation_pipeline.png)
+
 
 1. **[Insert Particles](SPH-CUDA/cell_structure.cuh)**
 
